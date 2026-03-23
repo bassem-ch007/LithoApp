@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: keycloak-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    networks:
+      - litho-network
+  keycloack:
+    container_name: keycloack-litho
+    image: quay.io/keycloak/keycloak:26.5.6
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - litho-network
+networks:
+  litho-network:
+    driver: bridge
+volumes:
+  postgres_data:
