@@ -1,5 +1,11 @@
 spring:
   application:
     name: api-gateway
+  cloud:
+    discovery:
+      enabled:
+        false
 server:
   port: 9090
+  servlet:
+    context-path: /api-gateway
