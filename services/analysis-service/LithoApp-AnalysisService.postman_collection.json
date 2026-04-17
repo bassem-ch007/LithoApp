@@ -1,0 +1,937 @@
+{
+  "info": {
+    "name": "LithoApp – Analysis Service v3",
+    "description": "Complete test suite reflecting all current business rules:\n\n• episodeId is REQUIRED on every bilan (400 if missing)\n• Completion only requires IN_PROGRESS status — no content validation\n• PDFs are fully versioned: every upload adds a new immutable version\n• Any biologist can upload/replace any document type at any time\n• Stone fields are all optional — bilan can be completed with any subset filled\n• MetabolicResult response exposes latestDocuments + versionHistory\n• Historical PDF versions downloadable via /versions/{n}/download\n\nRun order:\n  Folder 1 → Folder 2 → Folder 3 → Folder 4 → Folder 5 → Folder 6 → Folder 7",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",            "value": "http://localhost:8082",  "type": "string" },
+    { "key": "metabolicRequestId", "value": "",                       "type": "string" },
+    { "key": "stoneRequestId",     "value": "",                       "type": "string" },
+    { "key": "patientId",          "value": "PATIENT-001",            "type": "string" },
+    { "key": "episodeId",          "value": "EPISODE-001",            "type": "string" },
+    { "key": "doctorId",           "value": "DOC-001",                "type": "string" },
+    { "key": "biologist1",         "value": "BIO-001",                "type": "string" },
+    { "key": "biologist2",         "value": "BIO-002",                "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "1 – Create Requests",
+      "item": [
+
+        {
+          "name": "Create METABOLIC request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201 Created', () => pm.expect(pm.response.code).to.eql(201));",
+            "const b = pm.response.json();",
+            "pm.test('type = METABOLIC',  () => pm.expect(b.type).to.eql('METABOLIC'));",
+            "pm.test('status = CREATED',  () => pm.expect(b.status).to.eql('CREATED'));",
+            "pm.test('episodeId saved',   () => pm.expect(b.episodeId).to.eql('EPISODE-001'));",
+            "pm.test('metabolicResult exists', () => pm.expect(b.metabolicResult).to.not.be.null);",
+            "pm.test('latestDocuments empty',  () => pm.expect(b.metabolicResult.latestDocuments).to.eql([]));",
+            "pm.test('versionHistory empty',   () => pm.expect(b.metabolicResult.versionHistory).to.eql([]));",
+            "pm.test('uploadedTypesCount = 0', () => pm.expect(b.metabolicResult.uploadedTypesCount).to.eql(0));",
+            "pm.test('stoneResult is null',    () => pm.expect(b.stoneResult).to.be.null);",
+            "pm.collectionVariables.set('metabolicRequestId', b.id);",
+            "console.log('✔ metabolicRequestId =', b.id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"createdBy\": \"{{doctorId}}\",\n  \"type\": \"METABOLIC\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create STONE request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201 Created', () => pm.expect(pm.response.code).to.eql(201));",
+            "const b = pm.response.json();",
+            "pm.test('type = STONE',   () => pm.expect(b.type).to.eql('STONE'));",
+            "pm.test('status = CREATED', () => pm.expect(b.status).to.eql('CREATED'));",
+            "pm.test('episodeId saved', () => pm.expect(b.episodeId).to.eql('EPISODE-001'));",
+            "pm.test('stoneResult exists', () => pm.expect(b.stoneResult).to.not.be.null);",
+            "pm.test('all stone fields null', () => {",
+            "  const s = b.stoneResult;",
+            "  ['morphSize','morphSurface','morphColor','morphSection','morphOuterLayers','morphCore',",
+            "   'spectroSurface','spectroSection','spectroOuterLayers','spectroCore','finalStoneType']",
+            "  .forEach(f => pm.expect(s[f], f).to.be.null);",
+            "});",
+            "pm.collectionVariables.set('stoneRequestId', b.id);",
+            "console.log('✔ stoneRequestId =', b.id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"createdBy\": \"{{doctorId}}\",\n  \"type\": \"STONE\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create request – missing episodeId (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));",
+            "pm.test('episodeId error mentioned', () => {",
+            "  pm.expect(pm.response.text()).to.include('episodeId');",
+            "});",
+            "console.log('Validation error:', pm.response.json().message);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"createdBy\": \"{{doctorId}}\",\n  \"type\": \"METABOLIC\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create request – missing patientId (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));",
+            "pm.test('patientId error mentioned', () => pm.expect(pm.response.text()).to.include('patientId'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"episodeId\": \"{{episodeId}}\",\n  \"createdBy\": \"{{doctorId}}\",\n  \"type\": \"METABOLIC\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create request – missing createdBy (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"type\": \"STONE\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create request – missing type (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"createdBy\": \"{{doctorId}}\"\n}" }
+          }
+        },
+
+        {
+          "name": "Create request – empty episodeId string (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request – blank episodeId rejected', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] },
+            "body": { "mode": "raw", "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"\",\n  \"createdBy\": \"{{doctorId}}\",\n  \"type\": \"METABOLIC\"\n}" }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "2 – Read & List",
+      "item": [
+
+        {
+          "name": "Get METABOLIC request by ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('correct ID', () => pm.expect(b.id).to.eql(Number(pm.collectionVariables.get('metabolicRequestId'))));",
+            "pm.test('has episodeId', () => pm.expect(b.episodeId).to.not.be.null);",
+            "pm.test('metabolicResult present', () => pm.expect(b.metabolicResult).to.not.be.null);",
+            "pm.test('stoneResult is null', () => pm.expect(b.stoneResult).to.be.null);"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Get STONE request by ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('stoneResult present', () => pm.expect(b.stoneResult).to.not.be.null);",
+            "pm.test('metabolicResult is null', () => pm.expect(b.metabolicResult).to.be.null);"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Get request – unknown ID (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404 Not Found', () => pm.expect(pm.response.code).to.eql(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/99999", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","99999"] }
+          }
+        },
+
+        {
+          "name": "List by patientId",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const arr = pm.response.json();",
+            "pm.test('returns array', () => pm.expect(arr).to.be.an('array'));",
+            "pm.test('at least 2 items', () => pm.expect(arr.length).to.be.at.least(2));",
+            "pm.test('all have episodeId', () => arr.forEach(r => pm.expect(r.episodeId).to.not.be.null));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analysis-requests?patientId={{patientId}}",
+              "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"],
+              "query": [{ "key": "patientId", "value": "{{patientId}}" }]
+            }
+          }
+        },
+
+        {
+          "name": "List by patientId + status = CREATED",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('all CREATED', () => pm.response.json().forEach(r => pm.expect(r.status).to.eql('CREATED')));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analysis-requests?patientId={{patientId}}&status=CREATED",
+              "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"],
+              "query": [
+                { "key": "patientId", "value": "{{patientId}}" },
+                { "key": "status",    "value": "CREATED" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "List by episodeId",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('all share episodeId', () =>",
+            "  pm.response.json().forEach(r => pm.expect(r.episodeId).to.eql('EPISODE-001')));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analysis-requests?episodeId={{episodeId}}",
+              "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"],
+              "query": [{ "key": "episodeId", "value": "{{episodeId}}" }]
+            }
+          }
+        },
+
+        {
+          "name": "List by status = IN_PROGRESS",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('all IN_PROGRESS', () => pm.response.json().forEach(r => pm.expect(r.status).to.eql('IN_PROGRESS')));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analysis-requests?status=IN_PROGRESS",
+              "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"],
+              "query": [{ "key": "status", "value": "IN_PROGRESS" }]
+            }
+          }
+        },
+
+        {
+          "name": "List – no params (expect empty array)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('empty array', () => pm.expect(pm.response.json()).to.eql([]));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "3 – Metabolic PDF Upload & Versioning",
+      "item": [
+
+        {
+          "name": "Upload BLOOD_TEST – v1 (BIO-001)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('documentType = BLOOD_TEST', () => pm.expect(b.documentType).to.eql('BLOOD_TEST'));",
+            "pm.test('versionNumber = 1',         () => pm.expect(b.versionNumber).to.eql(1));",
+            "pm.test('isActive = true',            () => pm.expect(b.isActive).to.eql(true));",
+            "pm.test('uploadedBy = BIO-001',       () => pm.expect(b.uploadedBy).to.eql('BIO-001'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file",  "src": [],              "description": "Select any PDF" },
+              { "key": "biologistId", "type": "text",  "value": "{{biologist1}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Verify auto-transition → IN_PROGRESS after first upload",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('status = IN_PROGRESS',     () => pm.expect(pm.response.json().status).to.eql('IN_PROGRESS'));",
+            "pm.test('uploadedTypesCount = 1',   () => pm.expect(pm.response.json().metabolicResult.uploadedTypesCount).to.eql(1));",
+            "pm.test('latestDocuments has 1 entry', () => pm.expect(pm.response.json().metabolicResult.latestDocuments.length).to.eql(1));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Replace BLOOD_TEST – v2 (BIO-002)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('versionNumber = 2',   () => pm.expect(b.versionNumber).to.eql(2));",
+            "pm.test('isActive = true',     () => pm.expect(b.isActive).to.eql(true));",
+            "pm.test('uploadedBy = BIO-002', () => pm.expect(b.uploadedBy).to.eql('BIO-002'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist2}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Replace BLOOD_TEST – v3 (BIO-001 again)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('versionNumber = 3', () => pm.expect(pm.response.json().versionNumber).to.eql(3));",
+            "pm.test('isActive = true',   () => pm.expect(pm.response.json().isActive).to.eql(true));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist1}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Upload MORNING_URINE – v1 (BIO-002)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('versionNumber = 1',              () => pm.expect(pm.response.json().versionNumber).to.eql(1));",
+            "pm.test('documentType = MORNING_URINE',   () => pm.expect(pm.response.json().documentType).to.eql('MORNING_URINE'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/MORNING_URINE", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","MORNING_URINE"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist2}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Upload on STONE request via metabolic endpoint (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request – wrong type', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/metabolic/documents/BLOOD_TEST", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","metabolic","documents","BLOOD_TEST"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist1}}" }
+            ]}
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "4 – Metabolic Read & Version History",
+      "item": [
+
+        {
+          "name": "Get metabolic result – full structure",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+
+            "// latestDocuments: one entry per type, only active",
+            "pm.test('latestDocuments is array', () => pm.expect(b.latestDocuments).to.be.an('array'));",
+            "pm.test('2 types uploaded so far',  () => pm.expect(b.latestDocuments.length).to.eql(2));",
+            "pm.test('all latestDocuments are active', () =>",
+            "  b.latestDocuments.forEach(d => pm.expect(d.isActive, d.documentType).to.eql(true)));",
+
+            "// BLOOD_TEST active = v3",
+            "const bt = b.latestDocuments.find(d => d.documentType === 'BLOOD_TEST');",
+            "pm.test('BLOOD_TEST active = v3',     () => pm.expect(bt.versionNumber).to.eql(3));",
+            "pm.test('BLOOD_TEST uploadedBy BIO-001', () => pm.expect(bt.uploadedBy).to.eql('BIO-001'));",
+
+            "// versionHistory: all versions across all types",
+            "pm.test('versionHistory is array',   () => pm.expect(b.versionHistory).to.be.an('array'));",
+            "pm.test('4 total versions in history', () => pm.expect(b.versionHistory.length).to.eql(4));",
+
+            "const btHistory = b.versionHistory.filter(d => d.documentType === 'BLOOD_TEST');",
+            "pm.test('BLOOD_TEST has 3 versions in history', () => pm.expect(btHistory.length).to.eql(3));",
+            "pm.test('history ordered newest first', () => {",
+            "  pm.expect(btHistory[0].versionNumber).to.eql(3);",
+            "  pm.expect(btHistory[1].versionNumber).to.eql(2);",
+            "  pm.expect(btHistory[2].versionNumber).to.eql(1);",
+            "});",
+            "pm.test('only one BLOOD_TEST is active', () => {",
+            "  const active = btHistory.filter(d => d.isActive);",
+            "  pm.expect(active.length).to.eql(1);",
+            "  pm.expect(active[0].versionNumber).to.eql(3);",
+            "});",
+            "pm.test('old versions are inactive', () => {",
+            "  pm.expect(btHistory[1].isActive).to.eql(false);",
+            "  pm.expect(btHistory[2].isActive).to.eql(false);",
+            "});",
+
+            "// counters",
+            "pm.test('uploadedTypesCount = 2', () => pm.expect(b.uploadedTypesCount).to.eql(2));",
+
+            "console.log('latestDocuments count:', b.latestDocuments.length);",
+            "console.log('versionHistory total:', b.versionHistory.length);",
+            "console.log('uploadedTypesCount:', b.uploadedTypesCount);"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic"] }
+          }
+        },
+
+        {
+          "name": "Get metabolic embedded in full request DTO",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const mr = pm.response.json().metabolicResult;",
+            "pm.test('embedded metabolicResult present',  () => pm.expect(mr).to.not.be.null);",
+            "pm.test('latestDocuments present in embed',  () => pm.expect(mr.latestDocuments).to.be.an('array'));",
+            "pm.test('versionHistory present in embed',   () => pm.expect(mr.versionHistory).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Download BLOOD_TEST – active (latest) version",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('Content-Type = PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));",
+            "pm.test('Content-Disposition present', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST","download"] }
+          }
+        },
+
+        {
+          "name": "Download BLOOD_TEST – historical version 1",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('Content-Type = PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));",
+            "pm.test('filename contains v1', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('v1'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST/versions/1/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST","versions","1","download"] }
+          }
+        },
+
+        {
+          "name": "Download BLOOD_TEST – historical version 2",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('filename contains v2', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('v2'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST/versions/2/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST","versions","2","download"] }
+          }
+        },
+
+        {
+          "name": "Download MORNING_URINE – active version",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('Content-Type = PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/MORNING_URINE/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","MORNING_URINE","download"] }
+          }
+        },
+
+        {
+          "name": "Download H24_URINE – not yet uploaded (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404 Not Found', () => pm.expect(pm.response.code).to.eql(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/H24_URINE/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","H24_URINE","download"] }
+          }
+        },
+
+        {
+          "name": "Download non-existent version (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404 Not Found', () => pm.expect(pm.response.code).to.eql(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST/versions/99/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST","versions","99","download"] }
+          }
+        },
+
+        {
+          "name": "Get metabolic on STONE request (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/metabolic", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","metabolic"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "5 – Stone Analysis",
+      "item": [
+
+        {
+          "name": "Update stone – morphology (BIO-001)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('morphSize saved',    () => pm.expect(b.morphSize).to.eql('8mm'));",
+            "pm.test('morphColor saved',   () => pm.expect(b.morphColor).to.eql('Brown'));",
+            "pm.test('spectro still null', () => pm.expect(b.spectroSurface).to.be.null);",
+            "pm.test('finalStoneType null',() => pm.expect(b.finalStoneType).to.be.null);",
+            "pm.test('lastModifiedBy = BIO-001', () => pm.expect(b.lastModifiedBy).to.eql('BIO-001'));",
+            "pm.test('version bumped',     () => pm.expect(b.version).to.be.a('number'));"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modifiedBy\": \"{{biologist1}}\",\n  \"morphSize\": \"8mm\",\n  \"morphSurface\": \"Rough\",\n  \"morphColor\": \"Brown\",\n  \"morphSection\": \"Laminated\",\n  \"morphOuterLayers\": \"Calcium oxalate monohydrate\",\n  \"morphCore\": \"Uric acid\"\n}" }
+          }
+        },
+
+        {
+          "name": "Verify STONE auto-transition → IN_PROGRESS",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('status = IN_PROGRESS', () => pm.expect(pm.response.json().status).to.eql('IN_PROGRESS'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Update stone – spectrophotometry (BIO-002, different biologist)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('spectroSurface saved',          () => pm.expect(b.spectroSurface).to.eql('Whewellite 70%'));",
+            "pm.test('morphSize still intact',        () => pm.expect(b.morphSize).to.eql('8mm'));",
+            "pm.test('lastModifiedBy = BIO-002',      () => pm.expect(b.lastModifiedBy).to.eql('BIO-002'));"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modifiedBy\": \"{{biologist2}}\",\n  \"spectroSurface\": \"Whewellite 70%\",\n  \"spectroSection\": \"Weddellite 20%\",\n  \"spectroOuterLayers\": \"Carbapatite 10%\",\n  \"spectroCore\": \"Uric acid 100%\"\n}" }
+          }
+        },
+
+        {
+          "name": "Update stone – final classification only (BIO-001)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('finalStoneType saved', () =>",
+            "  pm.expect(pm.response.json().finalStoneType).to.eql('Calcium Oxalate Monohydrate (Whewellite)'));",
+            "pm.test('all previous fields intact', () => {",
+            "  const b = pm.response.json();",
+            "  pm.expect(b.morphSize).to.eql('8mm');",
+            "  pm.expect(b.spectroSurface).to.eql('Whewellite 70%');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modifiedBy\": \"{{biologist1}}\",\n  \"finalStoneType\": \"Calcium Oxalate Monohydrate (Whewellite)\"\n}" }
+          }
+        },
+
+        {
+          "name": "Update stone – same value (no audit entry produced)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "console.log('Sending same value → no STONE_RESULT_FIELD_UPDATED audit entry for morphSize expected.');"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modifiedBy\": \"{{biologist2}}\",\n  \"morphSize\": \"8mm\"\n}" }
+          }
+        },
+
+        {
+          "name": "Get stone result",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('has id',              () => pm.expect(b.id).to.be.a('number'));",
+            "pm.test('has version',         () => pm.expect(b.version).to.be.a('number'));",
+            "pm.test('has createdAt',       () => pm.expect(b.createdAt).to.not.be.null);",
+            "pm.test('has lastModifiedAt',  () => pm.expect(b.lastModifiedAt).to.not.be.null);",
+            "pm.test('has lastModifiedBy',  () => pm.expect(b.lastModifiedBy).to.not.be.null);",
+            "console.log('Stone state:', JSON.stringify(b, null, 2));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] }
+          }
+        },
+
+        {
+          "name": "Get stone on METABOLIC request (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","stone"] }
+          }
+        },
+
+        {
+          "name": "Update stone – missing modifiedBy (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));",
+            "pm.test('modifiedBy error', () => pm.expect(pm.response.text()).to.include('modifiedBy'));"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"morphSize\": \"10mm\"\n}" }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "6 – Completion",
+      "item": [
+
+        {
+          "name": "Complete METABOLIC from CREATED state (expect 422)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "// Works only if you use a brand-new CREATED request.",
+            "// The current metabolicRequestId is already IN_PROGRESS.",
+            "// To test this properly: create a new request, don't upload anything, then try to complete it.",
+            "console.log('This guard applies only to CREATED requests. Current request is IN_PROGRESS – this will return 200.');"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/complete", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","complete"] },
+            "body": { "mode": "raw", "raw": "{\n  \"completedBy\": \"{{biologist1}}\"\n}" }
+          }
+        },
+
+        {
+          "name": "Complete METABOLIC – only 2 of 3 PDFs (no validation, expect 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK – completes without PDF count check', () => pm.expect(pm.response.code).to.eql(200));",
+            "const b = pm.response.json();",
+            "pm.test('status = COMPLETED',       () => pm.expect(b.status).to.eql('COMPLETED'));",
+            "pm.test('completedBy set',          () => pm.expect(b.completedBy).to.eql('BIO-001'));",
+            "pm.test('completedAt set',          () => pm.expect(b.completedAt).to.not.be.null);",
+            "pm.test('uploadedTypesCount = 2',   () => pm.expect(b.metabolicResult.uploadedTypesCount).to.eql(2));",
+            "console.log('✔ METABOLIC completed with only', b.metabolicResult.uploadedTypesCount, 'of 3 PDFs');"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/complete", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","complete"] },
+            "body": { "mode": "raw", "raw": "{\n  \"completedBy\": \"{{biologist1}}\"\n}" }
+          }
+        },
+
+        {
+          "name": "Complete STONE – without finalStoneType (no validation, expect 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK – completes without field validation', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('status = COMPLETED', () => pm.expect(pm.response.json().status).to.eql('COMPLETED'));",
+            "pm.test('completedBy = BIO-002', () => pm.expect(pm.response.json().completedBy).to.eql('BIO-002'));",
+            "console.log('✔ STONE completed freely by the biologist');"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/complete", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","complete"] },
+            "body": { "mode": "raw", "raw": "{\n  \"completedBy\": \"{{biologist2}}\"\n}" }
+          }
+        },
+
+        {
+          "name": "Complete – missing completedBy (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 Bad Request', () => pm.expect(pm.response.code).to.eql(400));",
+            "pm.test('completedBy error', () => pm.expect(pm.response.text()).to.include('completedBy'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/complete", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","complete"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "7 – Immutability (COMPLETED lock)",
+      "item": [
+
+        {
+          "name": "Upload PDF to COMPLETED METABOLIC (expect 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('409 Conflict – request locked', () => pm.expect(pm.response.code).to.eql(409));",
+            "console.log('Lock message:', pm.response.json().message);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/H24_URINE", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","H24_URINE"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist1}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Replace PDF on COMPLETED METABOLIC (expect 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('409 Conflict', () => pm.expect(pm.response.code).to.eql(409));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file",        "type": "file", "src": [] },
+              { "key": "biologistId", "type": "text", "value": "{{biologist2}}" }
+            ]}
+          }
+        },
+
+        {
+          "name": "Update stone on COMPLETED STONE (expect 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('409 Conflict', () => pm.expect(pm.response.code).to.eql(409));"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/stone", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","stone"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modifiedBy\": \"{{biologist1}}\",\n  \"finalStoneType\": \"Attempted override\"\n}" }
+          }
+        },
+
+        {
+          "name": "Complete already COMPLETED request (expect 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('409 Conflict', () => pm.expect(pm.response.code).to.eql(409));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/complete", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","complete"] },
+            "body": { "mode": "raw", "raw": "{\n  \"completedBy\": \"{{biologist1}}\"\n}" }
+          }
+        },
+
+        {
+          "name": "Read COMPLETED metabolic – still accessible",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('status = COMPLETED',       () => pm.expect(pm.response.json().status).to.eql('COMPLETED'));",
+            "pm.test('version history readable', () =>",
+            "  pm.expect(pm.response.json().metabolicResult.versionHistory.length).to.be.above(0));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}"] }
+          }
+        },
+
+        {
+          "name": "Download historical PDF on COMPLETED request – still works",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK – historical PDFs always accessible', () => pm.expect(pm.response.code).to.eql(200));",
+            "pm.test('Content-Type = PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/metabolic/documents/BLOOD_TEST/versions/1/download", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","metabolic","documents","BLOOD_TEST","versions","1","download"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "8 – Audit Log",
+      "item": [
+
+        {
+          "name": "Audit – METABOLIC request (full chronological trace)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const entries = pm.response.json();",
+            "pm.test('is array',    () => pm.expect(entries).to.be.an('array'));",
+            "pm.test('has entries', () => pm.expect(entries.length).to.be.above(0));",
+
+            "const types = entries.map(e => e.actionType);",
+            "pm.test('REQUEST_CREATED present',   () => pm.expect(types).to.include('REQUEST_CREATED'));",
+            "pm.test('STATUS_CHANGED present',    () => pm.expect(types).to.include('STATUS_CHANGED'));",
+            "pm.test('PDF_UPLOADED present',      () => pm.expect(types).to.include('PDF_UPLOADED'));",
+            "pm.test('PDF_REPLACED present',      () => pm.expect(types).to.include('PDF_REPLACED'));",
+            "pm.test('REQUEST_COMPLETED present', () => pm.expect(types).to.include('REQUEST_COMPLETED'));",
+
+            "const replacements = entries.filter(e => e.actionType === 'PDF_REPLACED');",
+            "pm.test('2 PDF_REPLACED entries for BLOOD_TEST', () => pm.expect(replacements.length).to.eql(2));",
+            "pm.test('PDF_REPLACED entries have old and new storageKey', () => {",
+            "  replacements.forEach(r => {",
+            "    pm.expect(r.oldValue, 'oldValue').to.not.be.null;",
+            "    pm.expect(r.newValue, 'newValue').to.not.be.null;",
+            "    pm.expect(r.targetField, 'targetField').to.eql('BLOOD_TEST');",
+            "  });",
+            "});",
+
+            "pm.test('entries ordered chronologically', () => {",
+            "  for (let i = 1; i < entries.length; i++) {",
+            "    pm.expect(new Date(entries[i].timestamp) >= new Date(entries[i-1].timestamp)).to.be.true;",
+            "  }",
+            "});",
+
+            "console.log('Total audit entries:', entries.length);",
+            "console.log('Distinct action types:', [...new Set(types)].join(', '));",
+            "entries.forEach(e => console.log(",
+            "  `[${e.timestamp}] ${e.actorId} → ${e.actionType}` +",
+            "  (e.targetField ? ` on ${e.targetField}` : '') +",
+            "  (e.oldValue    ? ` (${e.oldValue} → ${e.newValue})` : '')",
+            "));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{metabolicRequestId}}/audit", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{metabolicRequestId}}","audit"] }
+          }
+        },
+
+        {
+          "name": "Audit – STONE request (field-level trace)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.expect(pm.response.code).to.eql(200));",
+            "const entries = pm.response.json();",
+            "const fieldUpdates = entries.filter(e => e.actionType === 'STONE_RESULT_FIELD_UPDATED');",
+            "pm.test('field-level entries exist', () => pm.expect(fieldUpdates.length).to.be.above(0));",
+
+            "const fields = fieldUpdates.map(e => e.targetField);",
+            "pm.test('morphSize tracked',       () => pm.expect(fields).to.include('morphSize'));",
+            "pm.test('spectroSurface tracked',  () => pm.expect(fields).to.include('spectroSurface'));",
+            "pm.test('finalStoneType tracked',  () => pm.expect(fields).to.include('finalStoneType'));",
+
+            "pm.test('each entry has newValue', () =>",
+            "  fieldUpdates.forEach(e => pm.expect(e.newValue).to.not.be.null));",
+
+            "pm.test('unchanged fields produce no entry', () => {",
+            "  const morphSizeUpdates = fieldUpdates.filter(e => e.targetField === 'morphSize');",
+            "  // morphSize was sent twice but same value the second time → only 1 entry",
+            "  pm.expect(morphSizeUpdates.length).to.eql(1);",
+            "});",
+
+            "const biologists = [...new Set(entries.map(e => e.actorId))];",
+            "pm.test('multiple biologists in audit', () => pm.expect(biologists.length).to.be.at.least(2));",
+
+            "console.log('Field-level entries:', fieldUpdates.length);",
+            "console.log('Biologists involved:', biologists.join(', '));",
+            "fieldUpdates.forEach(e =>",
+            "  console.log(`  [${e.timestamp}] ${e.actorId} changed ${e.targetField}: ${e.oldValue} → ${e.newValue}`));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/{{stoneRequestId}}/audit", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","{{stoneRequestId}}","audit"] }
+          }
+        },
+
+        {
+          "name": "Audit – unknown request (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404 Not Found', () => pm.expect(pm.response.code).to.eql(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analysis-requests/99999/audit", "host": ["{{baseUrl}}"], "path": ["api","analysis-requests","99999","audit"] }
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
