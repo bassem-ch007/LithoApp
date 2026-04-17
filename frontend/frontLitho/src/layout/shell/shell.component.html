@@ -1,0 +1,44 @@
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h2>LithoApp</h2>
+    </div>
+
+    <nav class="nav">
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+
+      @if (authService.isUrologue()) {
+        <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      }
+
+      <a routerLink="/analyses" routerLinkActive="active">Analyses</a>
+
+      <a routerLink="/drainage" routerLinkActive="active">Drainage</a>
+
+      <a routerLink="/notifications" routerLinkActive="active">Notifications</a>
+
+      @if (authService.isAdmin()) {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="user-info">
+        <strong>{{ authService.getFullName() || authService.getUsername() }}</strong>
+        <span>{{ authService.getEmail() }}</span>
+      </div>
+
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

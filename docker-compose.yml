@@ -11,6 +11,7 @@ services:
     networks:
       - litho-network
     restart: always
+
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -23,11 +24,11 @@ services:
       - litho-network
     depends_on:
       - postgres
+
   keycloak:
     container_name: keycloak-litho
     image: quay.io/keycloak/keycloak:26.5.6
-    #--import-realm
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -41,8 +42,8 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-#    volumes:
-#      - ./infrastructure/docker/keycloak/realm:/opt/keycloak/data/import
+    volumes:
+      - ./infrastructure/docker/keycloak/realm/medical-platform-realm.json:/opt/keycloak/data/import/medical-platform-realm.json:ro
     networks:
       - litho-network
     restart: no

@@ -29,7 +29,8 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+.angular
+/.angular/**
 .sass-cache/
 /connect.lock
 /coverage
@@ -38,5 +39,6 @@ testem.log
 /typings
 
 # System files
+frontLitho.iml
 .DS_Store
 Thumbs.db
