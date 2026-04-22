@@ -21,12 +21,13 @@ public class DrainageController {
     private final DrainageService drainageService;
 
     // ── POST /api/drainages ───────────────────────────────────────────────────
+    // episodeId is required in the request body.
 
     @PostMapping
     public ResponseEntity<DrainageResponse> create(
             @Valid @RequestBody CreateDrainageRequest request) {
-        DrainageResponse response = drainageService.createDrainage(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(drainageService.createDrainage(request));
     }
 
     // ── GET /api/drainages/{id} ───────────────────────────────────────────────
@@ -36,17 +37,37 @@ public class DrainageController {
         return ResponseEntity.ok(drainageService.getDrainageById(id));
     }
 
+    // ── GET /api/drainages/episode/{episodeId} ────────────────────────────────
+    // Primary read endpoint — drives the drainage panel on the episode detail screen.
+
+    @GetMapping("/episode/{episodeId}")
+    public ResponseEntity<List<DrainageResponse>> getByEpisode(
+            @PathVariable Long episodeId) {
+        return ResponseEntity.ok(drainageService.getDrainagesByEpisodeId(episodeId));
+    }
+
+    // ── GET /api/drainages/patient/{patientId} ────────────────────────────────
+    // Secondary read endpoint — patient-level drainage timeline across all episodes.
+
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<DrainageResponse>> getByPatient(
+            @PathVariable Long patientId) {
+        return ResponseEntity.ok(drainageService.getDrainagesByPatientId(patientId));
+    }
+
     // ── GET /api/drainages ────────────────────────────────────────────────────
-    // Query params: patientId, drainageType, status, overdue
+    // Flexible filter: episodeId, patientId, drainageType, status, overdue
 
     @GetMapping
     public ResponseEntity<List<DrainageResponse>> getAll(
+            @RequestParam(required = false) Long episodeId,
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) DrainageType drainageType,
             @RequestParam(required = false) DrainageStatus status,
             @RequestParam(required = false) Boolean overdue) {
 
         DrainageFilterRequest filter = new DrainageFilterRequest();
+        filter.setEpisodeId(episodeId);
         filter.setPatientId(patientId);
         filter.setDrainageType(drainageType);
         filter.setStatus(status);

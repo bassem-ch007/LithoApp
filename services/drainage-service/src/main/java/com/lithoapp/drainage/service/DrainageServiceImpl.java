@@ -11,6 +11,7 @@ import com.lithoapp.drainage.exception.InvalidDrainageStateException;
 import com.lithoapp.drainage.mapper.DrainageMapper;
 import com.lithoapp.drainage.repository.DrainageRepository;
 import com.lithoapp.drainage.repository.DrainageSpecification;
+import com.lithoapp.drainage.service.PatientValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,15 +30,28 @@ public class DrainageServiceImpl implements DrainageService {
 
     private final DrainageRepository drainageRepository;
     private final DrainageMapper drainageMapper;
+    private final EpisodeValidationService episodeValidationService;
+
+    /**
+     * Cross-service validation — enforces patient existence and active status.
+     * Replace the stub with a @Primary Feign-backed implementation when ready.
+     */
+    private final PatientValidationService patientValidationService;
 
     // ── Create ────────────────────────────────────────────────────────────────
 
     @Override
     public DrainageResponse createDrainage(CreateDrainageRequest request) {
+        // Step 1 — patient must exist and be active (PatientValidationServiceImpl → patient-service)
+        patientValidationService.validatePatientExists(request.getPatientId());
+
+        // Step 2 — episode must exist AND belong to the same patient
+        episodeValidationService.validateEpisodeBelongsToPatient(
+                request.getEpisodeId(), request.getPatientId());
+
         validateJjTypeConsistency(request.getDrainageType(), request);
 
         // Auto-compute plannedRemovalDate when the urologist did not provide one.
-        // If a date was explicitly supplied, it is preserved as-is (honoured below).
         if (request.getPlannedRemovalDate() == null) {
             LocalDate computed = DrainageDurationPolicy.computeDefault(
                     request.getDrainageType(), request.getJjType(), request.getPlacedAt());
@@ -54,9 +68,9 @@ public class DrainageServiceImpl implements DrainageService {
         Drainage drainage = drainageMapper.toEntity(request);
         Drainage saved = drainageRepository.save(drainage);
 
-        log.info("Created drainage [id={}, patient={}, type={}, side={}, plannedRemoval={}]",
-                saved.getId(), saved.getPatientId(), saved.getDrainageType(),
-                saved.getSide(), saved.getPlannedRemovalDate());
+        log.info("Created drainage [id={}, episode={}, patient={}, type={}, side={}, plannedRemoval={}]",
+                saved.getId(), saved.getEpisodeId(), saved.getPatientId(),
+                saved.getDrainageType(), saved.getSide(), saved.getPlannedRemovalDate());
 
         return drainageMapper.toResponse(saved);
     }
@@ -71,8 +85,8 @@ public class DrainageServiceImpl implements DrainageService {
         if (request.getPlannedRemovalDate() != null) {
             if (request.getPlannedRemovalDate().isBefore(drainage.getPlacedAt())) {
                 throw new InvalidDrainageStateException(
-                    "plannedRemovalDate (" + request.getPlannedRemovalDate() +
-                    ") must not be before placedAt (" + drainage.getPlacedAt() + ")."
+                        "plannedRemovalDate (" + request.getPlannedRemovalDate() +
+                        ") must not be before placedAt (" + drainage.getPlacedAt() + ")."
                 );
             }
             drainage.setPlannedRemovalDate(request.getPlannedRemovalDate());
@@ -99,8 +113,8 @@ public class DrainageServiceImpl implements DrainageService {
 
         if (request.getRemovedAt().isBefore(drainage.getPlacedAt())) {
             throw new InvalidDrainageStateException(
-                "removedAt (" + request.getRemovedAt() +
-                ") must not be before placedAt (" + drainage.getPlacedAt() + ")."
+                    "removedAt (" + request.getRemovedAt() +
+                    ") must not be before placedAt (" + drainage.getPlacedAt() + ")."
             );
         }
 
@@ -118,6 +132,24 @@ public class DrainageServiceImpl implements DrainageService {
     @Transactional(readOnly = true)
     public DrainageResponse getDrainageById(UUID id) {
         return drainageMapper.toResponse(findById(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DrainageResponse> getDrainagesByEpisodeId(Long episodeId) {
+        return drainageRepository.findByEpisodeId(episodeId)
+                .stream()
+                .map(drainageMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DrainageResponse> getDrainagesByPatientId(Long patientId) {
+        return drainageRepository.findByPatientId(patientId)
+                .stream()
+                .map(drainageMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -140,8 +172,8 @@ public class DrainageServiceImpl implements DrainageService {
     private void requireActive(Drainage drainage, String operation) {
         if (drainage.getStatus() != DrainageStatus.ACTIVE) {
             throw new InvalidDrainageStateException(
-                "Cannot " + operation + " drainage [id=" + drainage.getId() +
-                "]: it is not ACTIVE (current status: " + drainage.getStatus() + ")."
+                    "Cannot " + operation + " drainage [id=" + drainage.getId() +
+                    "]: it is not ACTIVE (current status: " + drainage.getStatus() + ")."
             );
         }
     }
@@ -154,13 +186,11 @@ public class DrainageServiceImpl implements DrainageService {
         boolean hasJjType = request.getJjType() != null;
 
         if (isJJ && !hasJjType) {
-            throw new InvalidDrainageStateException(
-                "jjType is required when drainageType is JJ."
-            );
+            throw new InvalidDrainageStateException("jjType is required when drainageType is JJ.");
         }
         if (!isJJ && hasJjType) {
             throw new InvalidDrainageStateException(
-                "jjType must be null when drainageType is not JJ (got: " + type + ")."
+                    "jjType must be null when drainageType is not JJ (got: " + type + ")."
             );
         }
     }
@@ -170,27 +200,30 @@ public class DrainageServiceImpl implements DrainageService {
      */
     private void validatePlacedAtBeforePlannedRemoval(CreateDrainageRequest request) {
         if (request.getPlannedRemovalDate() != null &&
-            request.getPlannedRemovalDate().isBefore(request.getPlacedAt())) {
+                request.getPlannedRemovalDate().isBefore(request.getPlacedAt())) {
             throw new InvalidDrainageStateException(
-                "plannedRemovalDate (" + request.getPlannedRemovalDate() +
-                ") must not be before placedAt (" + request.getPlacedAt() + ")."
+                    "plannedRemovalDate (" + request.getPlannedRemovalDate() +
+                    ") must not be before placedAt (" + request.getPlacedAt() + ")."
             );
         }
     }
 
     /**
-     * Rule: no duplicate ACTIVE drainage for the same patient / type / side.
+     * Rule: no duplicate ACTIVE drainage for the same episode / type / side.
+     *
+     * Scoped to episode (not patient) — a patient can legitimately have the
+     * same drainage type and side in two different stone episodes.
      */
     private void checkNoDuplicateActiveDrainage(CreateDrainageRequest request) {
-        boolean exists = drainageRepository.existsByPatientIdAndDrainageTypeAndSideAndStatus(
-                request.getPatientId(),
+        boolean exists = drainageRepository.existsByEpisodeIdAndDrainageTypeAndSideAndStatus(
+                request.getEpisodeId(),
                 request.getDrainageType(),
                 request.getSide(),
                 DrainageStatus.ACTIVE
         );
         if (exists) {
             throw new DuplicateActiveDrainageException(
-                    request.getPatientId(), request.getDrainageType(), request.getSide()
+                    request.getEpisodeId(), request.getDrainageType(), request.getSide()
             );
         }
     }

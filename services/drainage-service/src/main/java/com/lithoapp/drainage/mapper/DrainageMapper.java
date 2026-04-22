@@ -18,10 +18,12 @@ public class DrainageMapper {
 
     /**
      * Maps a CreateDrainageRequest to a new Drainage entity.
+     * episodeId is mapped as the primary case anchor.
      * Status is set to ACTIVE; audit timestamps are handled by Hibernate.
      */
     public Drainage toEntity(CreateDrainageRequest request) {
         return Drainage.builder()
+                .episodeId(request.getEpisodeId())
                 .patientId(request.getPatientId())
                 .doctorId(request.getDoctorId())
                 .drainageType(request.getDrainageType())
@@ -45,6 +47,7 @@ public class DrainageMapper {
 
         return DrainageResponse.builder()
                 .id(drainage.getId())
+                .episodeId(drainage.getEpisodeId())
                 .patientId(drainage.getPatientId())
                 .doctorId(drainage.getDoctorId())
                 .drainageType(drainage.getDrainageType())

@@ -57,6 +57,6 @@ public class AuditEntry {
     @Column(columnDefinition = "TEXT")
     private String newValue;
 
-    @Column(nullable = false)
+    @Column(name = "occurred_at", nullable = false)
     private LocalDateTime timestamp;
 }

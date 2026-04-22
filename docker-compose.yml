@@ -1,20 +1,275 @@
+# =============================================================================
+# LithoApp — Full Stack Docker Compose
+# Usage: docker compose up -d
+#
+# Services
+# --------
+#   Databases    : patient-db (5436), episode-db (5437), bilan-db (5433), drainage-db (5434)
+#   Object store : minio (9000 API / 9001 console)
+#   Applications : patient-service (8086), episode-service (8085),
+#                  analysis-service (8082), drainage-service (8084)
+#   Tooling      : pgadmin (5050)
+#
+# Inter-service communication uses container names (Docker DNS).
+# Spring Boot env-var overrides follow relaxed binding:
+#   SPRING_DATASOURCE_URL overrides spring.datasource.url
+#   PATIENT_SERVICE_BASE_URL overrides patient-service.base-url
+# =============================================================================
+
 services:
-  postgres:
+
+  # ===========================================================================
+  # DATABASES
+  # ===========================================================================
+
+  patient-db:
     image: postgres:16
-    container_name: keycloak-db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    container_name: patient-db
     environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lithoapp_patients
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - patient_db_data:/var/lib/postgresql/data
     networks:
       - litho-network
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lithoapp_patients"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  episode-db:
+    image: postgres:16
+    container_name: episode-db
+    environment:
+      POSTGRES_DB: episode_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - episode_db_data:/var/lib/postgresql/data
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d episode_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bilan-db:
+    image: postgres:16
+    container_name: bilan-db
+    environment:
+      POSTGRES_DB: bilan_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - bilan_db_data:/var/lib/postgresql/data
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bilan_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  drainage-db:
+    image: postgres:16
+    container_name: drainage-db
+    environment:
+      POSTGRES_DB: drainage_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - drainage_db_data:/var/lib/postgresql/data
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d drainage_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # OBJECT STORE — MinIO
+  # API  : http://localhost:9000  (used by analysis-service)
+  # UI   : http://localhost:9001  (browser console, login: minioadmin / minioadmin)
+  # ===========================================================================
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # APPLICATION SERVICES
+  # ===========================================================================
+
+  patient-service:
+    build:
+      context: ./services/patient-service
+      dockerfile: Dockerfile
+    image: lithoapp/patient-service:latest
+    container_name: patient-service
+    ports:
+      - "8086:8086"
+    environment:
+      # Database — point to container name instead of localhost
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/lithoapp_patients
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # JVM flags — JAVA_TOOL_OPTIONS is read natively by the JVM.
+      # JAVA_OPTS would be silently ignored with exec-form ENTRYPOINT.
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    depends_on:
+      patient-db:
+        condition: service_healthy
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  episode-service:
+    build:
+      context: ./services/episode-service
+      dockerfile: Dockerfile
+    image: lithoapp/episode-service:latest
+    container_name: episode-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://episode-db:5432/episode_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Inter-service: call patient-service by container name
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+    depends_on:
+      episode-db:
+        condition: service_healthy
+      patient-service:
+        condition: service_healthy
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  analysis-service:
+    build:
+      context: ./services/analysis-service
+      dockerfile: Dockerfile
+    image: lithoapp/analysis-service:latest
+    container_name: analysis-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bilan-db:5432/bilan_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # MinIO — point to container name
+      STORAGE_TYPE: minio
+      STORAGE_MINIO_ENDPOINT: http://minio:9000
+      STORAGE_MINIO_ACCESS_KEY: minioadmin
+      STORAGE_MINIO_SECRET_KEY: minioadmin
+      STORAGE_MINIO_BUCKET: analysis-pdfs
+      # Inter-service
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+    depends_on:
+      bilan-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      patient-service:
+        condition: service_healthy
+      episode-service:
+        condition: service_healthy
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  drainage-service:
+    build:
+      context: ./services/drainage-service
+      dockerfile: Dockerfile
+    image: lithoapp/drainage-service:latest
+    container_name: drainage-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://drainage-db:5432/drainage_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Inter-service
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+    depends_on:
+      drainage-db:
+        condition: service_healthy
+      patient-service:
+        condition: service_healthy
+      episode-service:
+        condition: service_healthy
+    networks:
+      - litho-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ===========================================================================
+  # TOOLING
+  # ===========================================================================
 
   pgadmin:
-    container_name: pgadmin
     image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -23,34 +278,64 @@ services:
     networks:
       - litho-network
     depends_on:
-      - postgres
+      - patient-db
+      - episode-db
+      - bilan-db
+      - drainage-db
+    restart: unless-stopped
 
-  keycloak:
-    container_name: keycloak-litho
-    image: quay.io/keycloak/keycloak:26.5.6
-    command: start-dev --import-realm
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: password
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME_STRICT: "false"
-      KC_HTTP_ENABLED: "true"
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    volumes:
-      - ./infrastructure/docker/keycloak/realm/medical-platform-realm.json:/opt/keycloak/data/import/medical-platform-realm.json:ro
-    networks:
-      - litho-network
-    restart: no
+  # ===========================================================================
+  # LEGACY — Keycloak infrastructure (not yet wired to any service)
+  # Uncomment when auth is enabled.
+  # ===========================================================================
+
+  # keycloak-db:
+  #   image: postgres:16
+  #   container_name: keycloak-db
+  #   environment:
+  #     POSTGRES_DB: keycloak
+  #     POSTGRES_USER: keycloak
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - keycloak_db_data:/var/lib/postgresql/data
+  #   networks:
+  #     - litho-network
+  #   restart: unless-stopped
+
+  # keycloak:
+  #   container_name: keycloak-litho
+  #   image: quay.io/keycloak/keycloak:26.5.6
+  #   command: start-dev --import-realm
+  #   environment:
+  #     KC_DB: postgres
+  #     KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+  #     KC_DB_USERNAME: keycloak
+  #     KC_DB_PASSWORD: password
+  #     KEYCLOAK_ADMIN: admin
+  #     KEYCLOAK_ADMIN_PASSWORD: admin
+  #     KC_HOSTNAME_STRICT: "false"
+  #     KC_HTTP_ENABLED: "true"
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - keycloak-db
+  #   volumes:
+  #     - ./infrastructure/docker/keycloak/realm/medical-platform-realm.json:/opt/keycloak/data/import/medical-platform-realm.json:ro
+  #   networks:
+  #     - litho-network
+
+# =============================================================================
+# NETWORKS & VOLUMES
+# =============================================================================
 
 networks:
   litho-network:
     driver: bridge
 
 volumes:
-  postgres_data:
+  patient_db_data:
+  episode_db_data:
+  bilan_db_data:
+  drainage_db_data:
+  minio_data:
+  # keycloak_db_data:

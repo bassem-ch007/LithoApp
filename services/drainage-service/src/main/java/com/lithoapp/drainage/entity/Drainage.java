@@ -15,12 +15,16 @@ import java.util.UUID;
 
 @Entity
 @Table(
-    name = "drainages",
-    uniqueConstraints = {
-        // Enforced at DB level: one ACTIVE drainage per (patient, type, side)
-        // The partial uniqueness on status=ACTIVE is handled in business logic
-        // because standard SQL unique constraints cannot filter by column value portably.
-    }
+        name = "drainages",
+        indexes = {
+                // Primary query: all drainages for an episode (episode detail screen)
+                @Index(name = "idx_drainage_episode_id",      columnList = "episode_id"),
+                // Secondary query: all drainages for a patient (patient timeline)
+                @Index(name = "idx_drainage_patient_id",      columnList = "patient_id"),
+                // Scheduler queries
+                @Index(name = "idx_drainage_status",          columnList = "status"),
+                @Index(name = "idx_drainage_planned_removal", columnList = "planned_removal_date")
+        }
 )
 @Getter
 @Setter
@@ -33,66 +37,92 @@ public class Drainage {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // ── External references ──────────────────────────────────────────────────
-    // These are plain IDs for now. When Feign clients are introduced, real
-    // validation against Patient/Doctor/Episode services can be added here.
+    // ── Cross-service references ─────────────────────────────────────────────
+    // Plain IDs — no JPA relations across service boundaries.
+    // episodeId is validated via EpisodeValidationService (stub now, Feign later).
 
-    @Column(nullable = false)
+    /**
+     * The clinical episode this drainage belongs to.
+     * This is the primary case anchor — reflects the workflow:
+     *   patient → episode → drainage
+     *
+     * Cross-service reference to episode-service.
+     * The duplicate active drainage guard operates at episode scope:
+     *   no two ACTIVE drainages of same type+side within the same episode.
+     */
+    @Column(name = "episode_id", nullable = false)
+    private Long episodeId;
+
+    /**
+     * Patient reference — kept alongside episodeId for filtering,
+     * scheduler log context, and reporting.
+     * Must match the patient of the referenced episode
+     * (enforced by EpisodeValidationService when Feign is wired).
+     */
+    @Column(name = "patient_id", nullable = false)
     private Long patientId;
 
-    @Column(nullable = false)
+    /**
+     * Treating doctor reference.
+     * Cross-service reference — no FK constraint.
+     */
+    @Column(name = "doctor_id", nullable = false)
     private Long doctorId;
 
     // ── Clinical fields ──────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "drainage_type", nullable = false, length = 20)
     private DrainageType drainageType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "side", nullable = false, length = 10)
     private DrainageSide side;
 
-    @Column(nullable = false)
+    @Column(name = "placed_at", nullable = false)
     private LocalDate placedAt;
 
     /** Expected removal date. May be updated after insertion. */
+    @Column(name = "planned_removal_date")
     private LocalDate plannedRemovalDate;
 
-    /** Set when the drainage is physically removed. */
+    /** Set when the drainage device is physically removed. */
+    @Column(name = "removed_at")
     private LocalDate removedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false, length = 10)
     private DrainageStatus status;
 
     /**
      * Sub-type of JJ stent. Must be non-null when drainageType = JJ,
      * and must be null for all other types.
+     * Validated in the service layer.
      */
     @Enumerated(EnumType.STRING)
+    @Column(name = "jj_type", length = 20)
     private JJType jjType;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
     // ── Notification tracking ────────────────────────────────────────────────
-    // These fields are reserved for the future Notification Service.
-    // The scheduler populates them; the Notification Service will consume them.
+    // Reserved for future Notification Service integration.
+    // The scheduler populates these; the Notification Service will consume them.
 
-    /** Timestamp when the X-day pre-reminder was (logically) sent. */
+    @Column(name = "pre_reminder_sent_at")
     private LocalDateTime preReminderSentAt;
 
-    /** Timestamp when the same-day reminder was (logically) sent. */
+    @Column(name = "day_of_reminder_sent_at")
     private LocalDateTime dayOfReminderSentAt;
 
-    // ── Audit fields ─────────────────────────────────────────────────────────
+    // ── Audit ────────────────────────────────────────────────────────────────
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

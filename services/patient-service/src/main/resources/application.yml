@@ -31,6 +31,15 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     com.lithoapp.patientservice: DEBUG

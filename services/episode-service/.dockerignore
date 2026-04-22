@@ -1,0 +1,9 @@
+target/
+.idea/
+*.iml
+.DS_Store
+*.log
+.git/
+.gitignore
+Dockerfile
+.dockerignore

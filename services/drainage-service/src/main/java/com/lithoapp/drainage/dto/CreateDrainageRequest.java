@@ -11,6 +11,19 @@ import java.time.LocalDate;
 @Data
 public class CreateDrainageRequest {
 
+    /**
+     * The episode this drainage belongs to.
+     * Required — reflects the workflow: patient → episode → drainage.
+     * Cross-service reference to episode-service.
+     */
+    @NotNull(message = "episodeId is required")
+    private Long episodeId;
+
+    /**
+     * Patient who owns the episode.
+     * Must match the patient of the referenced episode.
+     * Kept for filtering, scheduler logs, and reporting.
+     */
     @NotNull(message = "patientId is required")
     private Long patientId;
 
@@ -27,9 +40,9 @@ public class CreateDrainageRequest {
     private LocalDate placedAt;
 
     /**
-     * Optional. If not provided, it can be left null
-     * (undetermined removal date) or defaulted by business logic.
-     * Must be >= placedAt when provided.
+     * Optional. When not provided, a default is computed by DrainageDurationPolicy
+     * based on the drainage type and jjType.
+     * Must be >= placedAt when explicitly provided.
      */
     private LocalDate plannedRemovalDate;
 

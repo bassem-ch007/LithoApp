@@ -10,8 +10,12 @@ import java.time.LocalDateTime;
 public class AnalysisRequestDto {
 
     private Long id;
-    private String patientId;
-    private String episodeId;
+
+    /** Primary case anchor — the episode this analysis belongs to. */
+    private Long episodeId;
+
+    /** Patient reference — must match episode.patientId. */
+    private Long patientId;
     private String createdBy;
     private AnalysisType type;
     private AnalysisStatus status;

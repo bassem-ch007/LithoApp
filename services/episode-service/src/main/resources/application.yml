@@ -1,0 +1,70 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: episode-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5437/episode_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.lithoapp.episodeservice: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# ------------------------------------------------------------
+# Inter-service HTTP clients
+# ------------------------------------------------------------
+patient-service:
+  base-url: http://localhost:8086
+
+# ------------------------------------------------------------
+# Future: Eureka service discovery
+# ------------------------------------------------------------
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: http://localhost:8761/eureka/
+#   instance:
+#     prefer-ip-address: true
+
+# ------------------------------------------------------------
+# Future: Keycloak JWT resource server
+# ------------------------------------------------------------
+# spring:
+#   security:
+#     oauth2:
+#       resourceserver:
+#         jwt:
+#           issuer-uri: http://localhost:8080/realms/lithoapp

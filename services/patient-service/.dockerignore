@@ -1,0 +1,16 @@
+# Build output — never send to Docker daemon (can be hundreds of MB)
+target/
+
+# IDE and OS noise
+.idea/
+*.iml
+.DS_Store
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Docker files themselves
+Dockerfile
+.dockerignore

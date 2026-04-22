@@ -18,11 +18,15 @@ import java.util.List;
  *
  * Base path: /api/analysis-requests
  *
+ * Workflow: patient → episode → analysis
+ * Every analysis request is anchored to an episode. The primary read path
+ * is GET /episode/{episodeId}. Patient-level reads span all episodes of a patient.
+ *
  * Search by DI / DMI / name / phone is intentionally not implemented here.
  * That search requires resolving patient identifiers via the patient-service.
  * It will be added as a separate endpoint once Feign is integrated:
  *   GET /api/analysis-requests/search?di=&dmi=&name=&phone=
- * For now, callers search by patientId directly.
+ * For now, callers search by patientId or episodeId directly.
  */
 @RestController
 @RequestMapping("/api/analysis-requests")
@@ -33,6 +37,11 @@ public class AnalysisRequestController {
 
     // ── Create ────────────────────────────────────────────────────────────
 
+    /**
+     * Create a new analysis request.
+     * Both patientId and episodeId are required.
+     * The episode must belong to the patient (validated by EpisodeValidationService).
+     */
     @PostMapping
     public ResponseEntity<AnalysisRequestDto> create(@Valid @RequestBody CreateAnalysisRequestDto dto) {
         AnalysisRequestDto created = analysisRequestService.createRequest(dto);
@@ -47,35 +56,66 @@ public class AnalysisRequestController {
     }
 
     /**
-     * List analysis requests with optional filters.
+     * Primary read endpoint — all analysis requests for a specific episode.
+     * Drives the analysis panel on the episode detail screen.
      *
-     * Supported query parameters:
-     * - patientId  (required when episodeId is absent)
-     * - episodeId  (alternative to patientId)
-     * - status     (optional filter: CREATED | IN_PROGRESS | COMPLETED)
+     * GET /api/analysis-requests/episode/{episodeId}
+     * GET /api/analysis-requests/episode/{episodeId}?status=IN_PROGRESS
+     */
+    @GetMapping("/episode/{episodeId}")
+    public ResponseEntity<List<AnalysisRequestDto>> getByEpisode(
+            @PathVariable Long episodeId,
+            @RequestParam(required = false) AnalysisStatus status) {
+        return ResponseEntity.ok(analysisRequestService.listByEpisode(episodeId, status));
+    }
+
+    /**
+     * Secondary read endpoint — all analysis requests for a patient across all episodes.
+     * Used for the patient-level timeline view.
+     *
+     * GET /api/analysis-requests/patient/{patientId}
+     * GET /api/analysis-requests/patient/{patientId}?status=COMPLETED
+     */
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<AnalysisRequestDto>> getByPatient(
+            @PathVariable Long patientId,
+            @RequestParam(required = false) AnalysisStatus status) {
+        return ResponseEntity.ok(analysisRequestService.listByPatient(patientId, status));
+    }
+
+    /**
+     * Flexible filter endpoint.
+     *
+     * Supported query parameters (all optional, but at least one should be provided):
+     *   episodeId    — filter by episode (primary axis)
+     *   patientId    — filter by patient across all episodes (secondary axis)
+     *   status       — CREATED | IN_PROGRESS | COMPLETED
+     *
+     * Priority: episodeId > patientId > status-only.
+     * If none are provided, an empty list is returned to avoid an unguarded full-table scan.
      *
      * Examples:
-     *   GET /api/analysis-requests?patientId=P123
-     *   GET /api/analysis-requests?patientId=P123&status=IN_PROGRESS
-     *   GET /api/analysis-requests?episodeId=E456
+     *   GET /api/analysis-requests?episodeId=1
+     *   GET /api/analysis-requests?episodeId=1&status=IN_PROGRESS
+     *   GET /api/analysis-requests?patientId=1&status=COMPLETED
+     *   GET /api/analysis-requests?status=CREATED
      */
     @GetMapping
     public ResponseEntity<List<AnalysisRequestDto>> list(
-            @RequestParam(required = false) String patientId,
-            @RequestParam(required = false) String episodeId,
+            @RequestParam(required = false) Long episodeId,
+            @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) AnalysisStatus status) {
 
+        if (episodeId != null) {
+            return ResponseEntity.ok(analysisRequestService.listByEpisode(episodeId, status));
+        }
         if (patientId != null) {
             return ResponseEntity.ok(analysisRequestService.listByPatient(patientId, status));
-        }
-        if (episodeId != null) {
-            return ResponseEntity.ok(analysisRequestService.listByEpisode(episodeId));
         }
         if (status != null) {
             return ResponseEntity.ok(analysisRequestService.listByStatus(status));
         }
-        // No filter provided — return empty list with informative hint
-        // (avoid an unguarded full-table scan in production)
+        // No filter provided — return empty list to avoid full-table scan
         return ResponseEntity.ok(List.of());
     }
 
@@ -84,9 +124,11 @@ public class AnalysisRequestController {
     /**
      * Explicitly mark a request as COMPLETED.
      *
-     * METABOLIC: validated — all 3 PDFs must be present.
-     * STONE:     validated — finalStoneType must be set.
+     * METABOLIC: all 3 PDFs should be present (biologist's responsibility).
+     * STONE:     finalStoneType should be set (biologist's responsibility).
      *
+     * CREATED → COMPLETED is blocked. At least one upload or field update
+     * must have occurred (auto-transitioning to IN_PROGRESS) before completing.
      * Once completed, the request becomes immutable.
      */
     @PostMapping("/{id}/complete")

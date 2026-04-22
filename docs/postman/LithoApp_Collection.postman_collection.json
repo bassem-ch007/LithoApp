@@ -1,0 +1,1956 @@
+{
+    "info": {
+        "_postman_id": "lithoapp-backend-tests-v1",
+        "name": "LithoApp Backend Tests",
+        "description": "Complete end-to-end testing collection for LithoApp microservices.\n\nServices covered:\n  • Patient Service  — http://localhost:8086\n  • Episode Service  — http://localhost:8085\n  • Analysis Service — http://localhost:8082\n  • Drainage Service — http://localhost:8084\n\nExecution order: 01-Patient → 02-Episode → 03-Analysis → 04-Drainage\n\nDynamic IDs (patientId, inactivePatientId, episodeId, stoneAnalysisId, metabolicAnalysisId, drainageId) are stored as collection variables by test scripts and reused automatically in subsequent requests.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "patientId",          "value": "", "type": "string", "description": "Set by [P-01] Create Patient" },
+        { "key": "inactivePatientId",  "value": "", "type": "string", "description": "Set by [P-10] Create Patient for Inactive Tests" },
+        { "key": "episodeId",          "value": "", "type": "string", "description": "Set by [E-01] Create Episode" },
+        { "key": "stoneAnalysisId",    "value": "", "type": "string", "description": "Set by [A-01] Create Stone Analysis" },
+        { "key": "metabolicAnalysisId","value": "", "type": "string", "description": "Set by [A-07] Create Metabolic Analysis" },
+        { "key": "drainageId",         "value": "", "type": "string", "description": "Set by [D-01] Create JJ Drainage" }
+    ],
+    "item": [
+
+        {
+            "name": "01 - Patient Service",
+            "item": [
+
+                {
+                    "name": "01 - Happy Path",
+                    "item": [
+
+                        {
+                            "name": "[P-01] Create Patient",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Body has id — stores patientId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('number');",
+                                        "    pm.collectionVariables.set('patientId', json.id);",
+                                        "});",
+                                        "pm.test(\"Patient is active by default\", () => {",
+                                        "    pm.expect(pm.response.json().active).to.be.true;",
+                                        "});",
+                                        "pm.test(\"DI matches\", () => {",
+                                        "    pm.expect(pm.response.json().di).to.eql('DI-2024-0001');",
+                                        "});",
+                                        "pm.test(\"clinicalInfo is present\", () => {",
+                                        "    pm.expect(pm.response.json().clinicalInfo).to.not.be.null;",
+                                        "});",
+                                        "pm.test(\"medication is present\", () => {",
+                                        "    pm.expect(pm.response.json().medication).to.not.be.null;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"di\": \"DI-2024-0001\",\n  \"dmi\": \"DMI-2024-0001\",\n  \"firstName\": \"Ahmed\",\n  \"lastName\": \"Benali\",\n  \"birthDate\": \"1985-03-15\",\n  \"gender\": \"MALE\",\n  \"height\": 175.0,\n  \"weight\": 78.0,\n  \"address\": \"12 Rue de la Paix, Tunis\",\n  \"email\": \"ahmed.benali@example.com\",\n  \"phone\": \"+216 55 000 001\",\n  \"clinicalInfo\": {\n    \"familyHistory\": true,\n    \"personalHistory\": false,\n    \"lithiasisType\": \"Calcium oxalate\",\n    \"frequentInfections\": false,\n    \"singleKidney\": false,\n    \"chronicRenalFailure\": false\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Hydrochlorothiazide 25mg daily\"\n  },\n  \"associatedDiseases\": [\"Hypertension\"],\n  \"geneticDiseases\": [],\n  \"anatomicalAnomalies\": []\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-02] Get Patient by ID",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"ID matches stored patientId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get('patientId')));",
+                                        "});",
+                                        "pm.test(\"clinicalInfo present\", () => pm.expect(pm.response.json().clinicalInfo).to.not.be.null);",
+                                        "pm.test(\"medication present\", () => pm.expect(pm.response.json().medication).to.not.be.null);"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/{{patientId}}",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "{{patientId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-03] Get Patient by DI",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"DI matches\", () => pm.expect(pm.response.json().di).to.eql('DI-2024-0001'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/by-di/DI-2024-0001",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "by-di", "DI-2024-0001"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-04] Get Patient by DMI",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"DMI matches\", () => pm.expect(pm.response.json().dmi).to.eql('DMI-2024-0001'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/by-dmi/DMI-2024-0001",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "by-dmi", "DMI-2024-0001"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-05] Search Patients by Name",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Response is a page with content array\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.content).to.be.an('array');",
+                                        "    pm.expect(json.totalElements).to.be.at.least(1);",
+                                        "});",
+                                        "pm.test(\"Each result has id, di, lastName\", () => {",
+                                        "    const first = pm.response.json().content[0];",
+                                        "    pm.expect(first).to.have.property('id');",
+                                        "    pm.expect(first).to.have.property('di');",
+                                        "    pm.expect(first).to.have.property('lastName');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/search?name=Benali&page=0&size=10",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "search"],
+                                    "query": [
+                                        { "key": "name", "value": "Benali" },
+                                        { "key": "page", "value": "0" },
+                                        { "key": "size", "value": "10" },
+                                        { "key": "di",    "value": "", "disabled": true },
+                                        { "key": "dmi",   "value": "", "disabled": true },
+                                        { "key": "phone", "value": "", "disabled": true }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-06] Update Patient",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Height updated to 177\", () => {",
+                                        "    pm.expect(pm.response.json().height).to.eql(177.0);",
+                                        "});",
+                                        "pm.test(\"Phone updated\", () => {",
+                                        "    pm.expect(pm.response.json().phone).to.eql('+216 55 000 002');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PUT",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"height\": 177.0,\n  \"phone\": \"+216 55 000 002\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/{{patientId}}",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "{{patientId}}"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "02 - Negative Cases",
+                    "item": [
+
+                        {
+                            "name": "[P-07] Create Patient — Duplicate DI → 409",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 409 Conflict\", () => pm.response.to.have.status(409));",
+                                        "pm.test(\"Error body has status 409\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql(409);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"di\": \"DI-2024-0001\",\n  \"dmi\": \"DMI-2024-DUPE\",\n  \"firstName\": \"Dupe\",\n  \"lastName\": \"Test\",\n  \"birthDate\": \"1990-01-01\",\n  \"gender\": \"MALE\",\n  \"medication\": { \"hasMedication\": false }\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-08] Create Patient — Missing Required Fields → 400",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 400 Bad Request\", () => pm.response.to.have.status(400));",
+                                        "pm.test(\"Response has fieldErrors\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.fieldErrors).to.be.an('object');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"firstName\": \"NoIdentifiers\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-09] Get Patient — Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Response has error message\", () => {",
+                                        "    pm.expect(pm.response.json().message).to.be.a('string');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/99999",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "99999"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "03 - Deactivation",
+                    "item": [
+
+                        {
+                            "name": "[P-10] Create Patient for Inactive Tests",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Stores inactivePatientId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('number');",
+                                        "    pm.collectionVariables.set('inactivePatientId', json.id);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"di\": \"DI-2024-0099\",\n  \"dmi\": \"DMI-2024-0099\",\n  \"firstName\": \"Sara\",\n  \"lastName\": \"Hamdi\",\n  \"birthDate\": \"1992-07-20\",\n  \"gender\": \"FEMALE\",\n  \"medication\": { \"hasMedication\": false }\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-11] Deactivate Patient → 204",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 204 No Content\", () => pm.response.to.have.status(204));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "DELETE",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/{{inactivePatientId}}",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "{{inactivePatientId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[P-12] Verify Patient is Inactive",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"active is false\", () => {",
+                                        "    pm.expect(pm.response.json().active).to.be.false;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlPatient}}/patients/{{inactivePatientId}}",
+                                    "host": ["{{baseUrlPatient}}"],
+                                    "path": ["patients", "{{inactivePatientId}}"]
+                                }
+                            }
+                        }
+
+                    ]
+                }
+
+            ]
+        },
+
+        {
+            "name": "02 - Episode Service",
+            "item": [
+
+                {
+                    "name": "01 - Happy Path",
+                    "item": [
+
+                        {
+                            "name": "[E-01] Create Episode",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Episode has id — stores episodeId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('number');",
+                                        "    pm.collectionVariables.set('episodeId', json.id);",
+                                        "});",
+                                        "pm.test(\"Status is ACTIVE\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('ACTIVE');",
+                                        "});",
+                                        "pm.test(\"patientId matches\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(String(json.patientId)).to.eql(String(pm.collectionVariables.get('patientId')));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{patientId}},\n  \"openedAt\": \"2024-06-01\",\n  \"title\": \"First Stone Episode — Right Kidney\",\n  \"notes\": \"Patient presents with right flank pain. CT scan confirms 8mm stone.\",\n  \"recurrence\": false\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-02] Get Episode by ID",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"ID matches stored episodeId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get('episodeId')));",
+                                        "});",
+                                        "pm.test(\"Status is ACTIVE\", () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));",
+                                        "pm.test(\"openedAt is present\", () => pm.expect(pm.response.json().openedAt).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/{{episodeId}}",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "{{episodeId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-03] List Episodes by Patient (all)",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Page has content\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.content).to.be.an('array');",
+                                        "    pm.expect(json.totalElements).to.be.at.least(1);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/patient/{{patientId}}?page=0&size=10",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "patient", "{{patientId}}"],
+                                    "query": [
+                                        { "key": "page", "value": "0" },
+                                        { "key": "size", "value": "10" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-04] List Episodes by Patient — Filter ACTIVE",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"All returned episodes are ACTIVE\", () => {",
+                                        "    const content = pm.response.json().content;",
+                                        "    content.forEach(ep => pm.expect(ep.status).to.eql('ACTIVE'));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/patient/{{patientId}}?status=ACTIVE&page=0&size=10",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "patient", "{{patientId}}"],
+                                    "query": [
+                                        { "key": "status", "value": "ACTIVE" },
+                                        { "key": "page", "value": "0" },
+                                        { "key": "size", "value": "10" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-05] Update Episode — Add Notes",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Notes updated\", () => {",
+                                        "    pm.expect(pm.response.json().notes).to.include('Follow-up');",
+                                        "});",
+                                        "pm.test(\"Status still ACTIVE\", () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PUT",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"notes\": \"Follow-up scheduled. Stone analysis and drainage ordered.\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/{{episodeId}}",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "{{episodeId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-06] Close Episode",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Episode status is CLOSED\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('CLOSED');",
+                                        "});",
+                                        "// NOTE: analysis-service and drainage-service do not check episode status,",
+                                        "// only episode existence and patient ownership. Tests in 03-Analysis and",
+                                        "// 04-Drainage will still work with this CLOSED episode."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PUT",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"status\": \"CLOSED\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/{{episodeId}}",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "{{episodeId}}"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "02 - Negative Cases",
+                    "item": [
+
+                        {
+                            "name": "[E-07] Create Episode — Patient Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message mentions patient\", () => {",
+                                        "    pm.expect(pm.response.json().message).to.be.a('string');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": 99999,\n  \"openedAt\": \"2024-06-01\",\n  \"title\": \"Ghost Episode\",\n  \"recurrence\": false\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-08] Create Episode — Inactive Patient → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "pm.test(\"Error body has status 422\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql(422);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{inactivePatientId}},\n  \"openedAt\": \"2024-06-01\",\n  \"title\": \"Inactive Patient Episode\",\n  \"recurrence\": false\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[E-09] Get Episode — Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message present\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlEpisode}}/episodes/99999",
+                                    "host": ["{{baseUrlEpisode}}"],
+                                    "path": ["episodes", "99999"]
+                                }
+                            }
+                        }
+
+                    ]
+                }
+
+            ]
+        },
+
+        {
+            "name": "03 - Analysis Service",
+            "item": [
+
+                {
+                    "name": "01 - STONE Workflow",
+                    "item": [
+
+                        {
+                            "name": "[A-01] Create Stone Analysis Request",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Analysis has id — stores stoneAnalysisId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('number');",
+                                        "    pm.collectionVariables.set('stoneAnalysisId', json.id);",
+                                        "});",
+                                        "pm.test(\"Type is STONE\", () => pm.expect(pm.response.json().type).to.eql('STONE'));",
+                                        "pm.test(\"Status is CREATED\", () => pm.expect(pm.response.json().status).to.eql('CREATED'));",
+                                        "pm.test(\"stoneResult embedded in response\", () => {",
+                                        "    pm.expect(pm.response.json().stoneResult).to.not.be.undefined;",
+                                        "});",
+                                        "pm.test(\"metabolicResult is null for STONE\", () => {",
+                                        "    pm.expect(pm.response.json().metabolicResult).to.be.null;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{patientId}},\n  \"episodeId\": {{episodeId}},\n  \"createdBy\": \"dr.dupont\",\n  \"type\": \"STONE\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-02] Get Stone Analysis — Status CREATED",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Analysis status is CREATED\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('CREATED');",
+                                        "});",
+                                        "pm.test(\"Type is STONE\", () => pm.expect(pm.response.json().type).to.eql('STONE'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-03] Update Stone Result (triggers IN_PROGRESS)",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"finalStoneType is set\", () => {",
+                                        "    pm.expect(pm.response.json().finalStoneType).to.eql('Calcium Oxalate Monohydrate (Whewellite)');",
+                                        "});",
+                                        "pm.test(\"morphSize is set\", () => {",
+                                        "    pm.expect(pm.response.json().morphSize).to.eql('8mm');",
+                                        "});",
+                                        "pm.test(\"lastModifiedBy is set\", () => {",
+                                        "    pm.expect(pm.response.json().lastModifiedBy).to.eql('bio.martin');",
+                                        "});",
+                                        "// This PATCH call auto-transitions the analysis from CREATED to IN_PROGRESS.",
+                                        "// See [A-04] Get Analysis for status verification."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PATCH",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"modifiedBy\": \"bio.martin\",\n  \"morphSize\": \"8mm\",\n  \"morphSurface\": \"Rough, spiky\",\n  \"morphColor\": \"Beige-yellow\",\n  \"morphSection\": \"Crystalline, radiated\",\n  \"morphOuterLayers\": \"COM layer\",\n  \"morphCore\": \"Compact, opaque\",\n  \"spectroSurface\": \"Whewellite 95%\",\n  \"spectroSection\": \"Whewellite 90%, Weddellite 10%\",\n  \"spectroOuterLayers\": \"Whewellite 100%\",\n  \"spectroCore\": \"Whewellite 100%\",\n  \"finalStoneType\": \"Calcium Oxalate Monohydrate (Whewellite)\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "stone"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-04] Get Stone Result",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"finalStoneType present\", () => {",
+                                        "    pm.expect(pm.response.json().finalStoneType).to.eql('Calcium Oxalate Monohydrate (Whewellite)');",
+                                        "});",
+                                        "pm.test(\"analysisRequestId matches\", () => {",
+                                        "    pm.expect(String(pm.response.json().analysisRequestId)).to.eql(String(pm.collectionVariables.get('stoneAnalysisId')));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "stone"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-05] Complete Stone Analysis",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Analysis status is COMPLETED\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('COMPLETED');",
+                                        "});",
+                                        "pm.test(\"completedAt is set\", () => {",
+                                        "    pm.expect(pm.response.json().completedAt).to.not.be.null;",
+                                        "});",
+                                        "pm.test(\"completedBy is set\", () => {",
+                                        "    pm.expect(pm.response.json().completedBy).to.eql('bio.martin');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"completedBy\": \"bio.martin\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/complete",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "complete"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "02 - METABOLIC Workflow",
+                    "item": [
+
+                        {
+                            "name": "[A-06] Create Metabolic Analysis Request",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Analysis has id — stores metabolicAnalysisId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('number');",
+                                        "    pm.collectionVariables.set('metabolicAnalysisId', json.id);",
+                                        "});",
+                                        "pm.test(\"Type is METABOLIC\", () => pm.expect(pm.response.json().type).to.eql('METABOLIC'));",
+                                        "pm.test(\"Status is CREATED\", () => pm.expect(pm.response.json().status).to.eql('CREATED'));",
+                                        "pm.test(\"metabolicResult embedded\", () => {",
+                                        "    pm.expect(pm.response.json().metabolicResult).to.not.be.undefined;",
+                                        "});",
+                                        "pm.test(\"stoneResult is null for METABOLIC\", () => {",
+                                        "    pm.expect(pm.response.json().stoneResult).to.be.null;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{patientId}},\n  \"episodeId\": {{episodeId}},\n  \"createdBy\": \"dr.dupont\",\n  \"type\": \"METABOLIC\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-07] Upload Blood Test PDF ⚠ (requires real PDF file)",
+                            "event": [{
+                                "listen": "prerequest",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "// ⚠ MANUAL STEP: In Postman UI, select a real PDF file for the 'file' form field.",
+                                        "// Max file size: 20MB.",
+                                        "// This request also auto-transitions the analysis from CREATED to IN_PROGRESS."
+                                    ]
+                                }
+                            }, {
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"documentType is BLOOD_TEST\", () => {",
+                                        "    pm.expect(pm.response.json().documentType).to.eql('BLOOD_TEST');",
+                                        "});",
+                                        "pm.test(\"versionNumber is 1\", () => {",
+                                        "    pm.expect(pm.response.json().versionNumber).to.eql(1);",
+                                        "});",
+                                        "pm.test(\"isActive is true\", () => {",
+                                        "    pm.expect(pm.response.json().isActive).to.be.true;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "file",
+                                            "type": "file",
+                                            "src": "",
+                                            "description": "⚠ Select a PDF file in Postman UI. Max 20MB."
+                                        },
+                                        {
+                                            "key": "biologistId",
+                                            "value": "bio.martin",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{metabolicAnalysisId}}", "metabolic", "documents", "BLOOD_TEST"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-08] Upload Morning Urine PDF ⚠ (requires real PDF file)",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"documentType is MORNING_URINE\", () => {",
+                                        "    pm.expect(pm.response.json().documentType).to.eql('MORNING_URINE');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        { "key": "file", "type": "file", "src": "", "description": "⚠ Select a PDF file" },
+                                        { "key": "biologistId", "value": "bio.martin", "type": "text" }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/MORNING_URINE",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{metabolicAnalysisId}}", "metabolic", "documents", "MORNING_URINE"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-09] Upload H24 Urine PDF ⚠ (requires real PDF file)",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"documentType is H24_URINE\", () => {",
+                                        "    pm.expect(pm.response.json().documentType).to.eql('H24_URINE');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        { "key": "file", "type": "file", "src": "", "description": "⚠ Select a PDF file" },
+                                        { "key": "biologistId", "value": "bio.martin", "type": "text" }
+                                    ]
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/H24_URINE",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{metabolicAnalysisId}}", "metabolic", "documents", "H24_URINE"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-10] Get Metabolic Result",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Response has latestDocuments array\", () => {",
+                                        "    pm.expect(pm.response.json().latestDocuments).to.be.an('array');",
+                                        "});",
+                                        "pm.test(\"Response has versionHistory array\", () => {",
+                                        "    pm.expect(pm.response.json().versionHistory).to.be.an('array');",
+                                        "});",
+                                        "pm.test(\"analysisRequestId matches\", () => {",
+                                        "    pm.expect(String(pm.response.json().analysisRequestId)).to.eql(String(pm.collectionVariables.get('metabolicAnalysisId')));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{metabolicAnalysisId}}", "metabolic"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-11] Complete Metabolic Analysis",
+                            "event": [{
+                                "listen": "prerequest",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "// Prerequisite: at least one PDF must have been uploaded (A-07) to",
+                                        "// auto-transition the analysis from CREATED to IN_PROGRESS.",
+                                        "// If A-07 was skipped, this request will return 409 (invalid transition)."
+                                    ]
+                                }
+                            }, {
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Status is COMPLETED\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('COMPLETED');",
+                                        "});",
+                                        "pm.test(\"Type is METABOLIC\", () => pm.expect(pm.response.json().type).to.eql('METABOLIC'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"completedBy\": \"bio.martin\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{metabolicAnalysisId}}/complete",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{metabolicAnalysisId}}", "complete"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "03 - Queries and Audit",
+                    "item": [
+
+                        {
+                            "name": "[A-12] Get Analyses by Episode",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least 2 analyses (STONE + METABOLIC)\", () => {",
+                                        "    pm.expect(pm.response.json().length).to.be.at.least(2);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/episode/{{episodeId}}",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "episode", "{{episodeId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-13] Get Analyses by Patient",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least 2 results\", () => pm.expect(pm.response.json().length).to.be.at.least(2));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/patient/{{patientId}}",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "patient", "{{patientId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-14] Filter Analyses — Status COMPLETED",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"All results are COMPLETED\", () => {",
+                                        "    const list = pm.response.json();",
+                                        "    list.forEach(a => pm.expect(a.status).to.eql('COMPLETED'));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests?episodeId={{episodeId}}&status=COMPLETED",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"],
+                                    "query": [
+                                        { "key": "episodeId", "value": "{{episodeId}}" },
+                                        { "key": "status",    "value": "COMPLETED" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-15] Get Audit Log",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least REQUEST_CREATED entry\", () => {",
+                                        "    const types = pm.response.json().map(e => e.actionType);",
+                                        "    pm.expect(types).to.include('REQUEST_CREATED');",
+                                        "});",
+                                        "pm.test(\"Entries are oldest-first\", () => {",
+                                        "    const entries = pm.response.json();",
+                                        "    if (entries.length > 1) {",
+                                        "        pm.expect(new Date(entries[0].timestamp).getTime())",
+                                        "            .to.be.at.most(new Date(entries[entries.length-1].timestamp).getTime());",
+                                        "    }",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/audit",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "audit"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "04 - Negative Cases",
+                    "item": [
+
+                        {
+                            "name": "[A-16] Create Analysis — Patient Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message present\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": 99999,\n  \"episodeId\": {{episodeId}},\n  \"createdBy\": \"dr.test\",\n  \"type\": \"STONE\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-17] Create Analysis — Inactive Patient → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "pm.test(\"Error body status is 422\", () => pm.expect(pm.response.json().status).to.eql(422));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{inactivePatientId}},\n  \"episodeId\": {{episodeId}},\n  \"createdBy\": \"dr.test\",\n  \"type\": \"STONE\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-18] Create Analysis — Episode Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message present\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"patientId\": {{patientId}},\n  \"episodeId\": 99999,\n  \"createdBy\": \"dr.test\",\n  \"type\": \"STONE\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-19] Complete Already Completed Analysis → 409",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 409 Conflict\", () => pm.response.to.have.status(409));",
+                                        "pm.test(\"Error body status is 409\", () => pm.expect(pm.response.json().status).to.eql(409));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"completedBy\": \"bio.martin\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/complete",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "complete"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[A-20] Update Stone Result on Completed Analysis → 409",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 409 Conflict\", () => pm.response.to.have.status(409));",
+                                        "// guardNotCompleted() on AnalysisRequest blocks all modifications once COMPLETED."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PATCH",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"modifiedBy\": \"bio.late\",\n  \"morphSize\": \"9mm\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlAnalysis}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+                                    "host": ["{{baseUrlAnalysis}}"],
+                                    "path": ["api", "analysis-requests", "{{stoneAnalysisId}}", "stone"]
+                                }
+                            }
+                        }
+
+                    ]
+                }
+
+            ]
+        },
+
+        {
+            "name": "04 - Drainage Service",
+            "item": [
+
+                {
+                    "name": "01 - Happy Path",
+                    "item": [
+
+                        {
+                            "name": "[D-01] Create JJ LEFT Drainage",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 201 Created\", () => pm.response.to.have.status(201));",
+                                        "pm.test(\"Drainage has UUID id — stores drainageId\", () => {",
+                                        "    const json = pm.response.json();",
+                                        "    pm.expect(json.id).to.be.a('string');",
+                                        "    pm.expect(json.id).to.match(/^[0-9a-f-]{36}$/i);",
+                                        "    pm.collectionVariables.set('drainageId', json.id);",
+                                        "});",
+                                        "pm.test(\"DrainageType is JJ\", () => pm.expect(pm.response.json().drainageType).to.eql('JJ'));",
+                                        "pm.test(\"Side is LEFT\", () => pm.expect(pm.response.json().side).to.eql('LEFT'));",
+                                        "pm.test(\"Status is ACTIVE\", () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));",
+                                        "pm.test(\"jjType is STANDARD_6F\", () => pm.expect(pm.response.json().jjType).to.eql('STANDARD_6F'));",
+                                        "pm.test(\"plannedRemovalDate is set (auto-computed or provided)\", () => {",
+                                        "    pm.expect(pm.response.json().plannedRemovalDate).to.not.be.null;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": {{patientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2024-06-10\",\n  \"jjType\": \"STANDARD_6F\",\n  \"notes\": \"Placed after ESWL session\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-02] Get Drainage by ID",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"ID matches stored drainageId\", () => {",
+                                        "    pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('drainageId'));",
+                                        "});",
+                                        "pm.test(\"Status is ACTIVE\", () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));",
+                                        "pm.test(\"overdue field is present\", () => {",
+                                        "    pm.expect(pm.response.json()).to.have.property('overdue');",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/{{drainageId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "{{drainageId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-03] Get Drainages by Episode",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least 1 drainage\", () => pm.expect(pm.response.json().length).to.be.at.least(1));",
+                                        "pm.test(\"All drainages belong to the episode\", () => {",
+                                        "    pm.response.json().forEach(d => {",
+                                        "        pm.expect(String(d.episodeId)).to.eql(String(pm.collectionVariables.get('episodeId')));",
+                                        "    });",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/episode/{{episodeId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "episode", "{{episodeId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-04] Get Drainages by Patient",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least 1 drainage\", () => pm.expect(pm.response.json().length).to.be.at.least(1));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/patient/{{patientId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "patient", "{{patientId}}"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-05] Update Drainage (plannedRemovalDate + notes)",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"plannedRemovalDate updated\", () => {",
+                                        "    pm.expect(pm.response.json().plannedRemovalDate).to.eql('2024-08-10');",
+                                        "});",
+                                        "pm.test(\"Notes updated\", () => {",
+                                        "    pm.expect(pm.response.json().notes).to.include('Extended');",
+                                        "});",
+                                        "pm.test(\"Status still ACTIVE\", () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PUT",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"plannedRemovalDate\": \"2024-08-10\",\n  \"notes\": \"Extended due to residual stone fragment.\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/{{drainageId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "{{drainageId}}"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "02 - Negative Cases",
+                    "item": [
+
+                        {
+                            "name": "[D-06] Create Drainage — Patient Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message present\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": 99999,\n  \"doctorId\": 1,\n  \"drainageType\": \"NEPHROSTOMY\",\n  \"side\": \"RIGHT\",\n  \"placedAt\": \"2024-06-10\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-07] Create Drainage — Inactive Patient → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "pm.test(\"Error body status is 422\", () => pm.expect(pm.response.json().status).to.eql(422));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": {{inactivePatientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"NEPHROSTOMY\",\n  \"side\": \"RIGHT\",\n  \"placedAt\": \"2024-06-10\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-08] Create Drainage — Episode Not Found → 404",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 404 Not Found\", () => pm.response.to.have.status(404));",
+                                        "pm.test(\"Error message present\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": 99999,\n  \"patientId\": {{patientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"NEPHROSTOMY\",\n  \"side\": \"RIGHT\",\n  \"placedAt\": \"2024-06-10\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-09] Create Duplicate Active JJ LEFT → 409",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 409 Conflict\", () => pm.response.to.have.status(409));",
+                                        "pm.test(\"Error body status is 409\", () => pm.expect(pm.response.json().status).to.eql(409));",
+                                        "// DuplicateActiveDrainageException: same episode + type + side + ACTIVE already exists."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": {{patientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2024-06-11\",\n  \"jjType\": \"LARGE_7F\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-10] Create JJ Drainage — Missing jjType → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "pm.test(\"Error body status is 422\", () => pm.expect(pm.response.json().status).to.eql(422));",
+                                        "// InvalidDrainageStateException: jjType is required when drainageType is JJ."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": {{patientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"JJ\",\n  \"side\": \"RIGHT\",\n  \"placedAt\": \"2024-06-10\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-11] Create Non-JJ with jjType → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "// InvalidDrainageStateException: jjType must be null when drainageType is not JJ."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "POST",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"episodeId\": {{episodeId}},\n  \"patientId\": {{patientId}},\n  \"doctorId\": 1,\n  \"drainageType\": \"NEPHROSTOMY\",\n  \"side\": \"RIGHT\",\n  \"placedAt\": \"2024-06-10\",\n  \"jjType\": \"STANDARD_6F\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "03 - Removal",
+                    "item": [
+
+                        {
+                            "name": "[D-12] Remove Drainage",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Status is REMOVED\", () => {",
+                                        "    pm.expect(pm.response.json().status).to.eql('REMOVED');",
+                                        "});",
+                                        "pm.test(\"removedAt is present\", () => {",
+                                        "    pm.expect(pm.response.json().removedAt).to.not.be.null;",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PATCH",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"removedAt\": \"2024-08-05\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/{{drainageId}}/remove",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "{{drainageId}}", "remove"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-13] Remove Already Removed Drainage → 409",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 409 Conflict\", () => pm.response.to.have.status(409));",
+                                        "pm.test(\"Error body status is 409\", () => pm.expect(pm.response.json().status).to.eql(409));",
+                                        "// DrainageAlreadyRemovedException is thrown."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PATCH",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"removedAt\": \"2024-08-06\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/{{drainageId}}/remove",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "{{drainageId}}", "remove"]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-14] Update Removed Drainage → 422",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 422 Unprocessable Entity\", () => pm.response.to.have.status(422));",
+                                        "// requireActive() throws InvalidDrainageStateException when status != ACTIVE."
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "PUT",
+                                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"notes\": \"Trying to edit a removed drainage\"\n}",
+                                    "options": { "raw": { "language": "json" } }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages/{{drainageId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages", "{{drainageId}}"]
+                                }
+                            }
+                        }
+
+                    ]
+                },
+
+                {
+                    "name": "04 - Filter Queries",
+                    "item": [
+
+                        {
+                            "name": "[D-15] Filter by Episode",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"At least 1 result\", () => pm.expect(pm.response.json().length).to.be.at.least(1));"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages?episodeId={{episodeId}}",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"],
+                                    "query": [
+                                        { "key": "episodeId", "value": "{{episodeId}}" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-16] Filter by Status REMOVED",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"All results are REMOVED\", () => {",
+                                        "    pm.response.json().forEach(d => pm.expect(d.status).to.eql('REMOVED'));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages?episodeId={{episodeId}}&status=REMOVED",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"],
+                                    "query": [
+                                        { "key": "episodeId", "value": "{{episodeId}}" },
+                                        { "key": "status",    "value": "REMOVED" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-17] Filter by DrainageType JJ",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"All results are JJ type\", () => {",
+                                        "    pm.response.json().forEach(d => pm.expect(d.drainageType).to.eql('JJ'));",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages?episodeId={{episodeId}}&drainageType=JJ",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"],
+                                    "query": [
+                                        { "key": "episodeId",    "value": "{{episodeId}}" },
+                                        { "key": "drainageType", "value": "JJ" }
+                                    ]
+                                }
+                            }
+                        },
+
+                        {
+                            "name": "[D-18] Filter Overdue Drainages",
+                            "event": [{
+                                "listen": "test",
+                                "script": {
+                                    "type": "text/javascript",
+                                    "exec": [
+                                        "pm.test(\"Status is 200 OK\", () => pm.response.to.have.status(200));",
+                                        "pm.test(\"Returns an array\", () => pm.expect(pm.response.json()).to.be.an('array'));",
+                                        "pm.test(\"All returned drainages have overdue=true\", () => {",
+                                        "    pm.response.json().forEach(d => pm.expect(d.overdue).to.be.true);",
+                                        "});"
+                                    ]
+                                }
+                            }],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrlDrainage}}/api/drainages?overdue=true",
+                                    "host": ["{{baseUrlDrainage}}"],
+                                    "path": ["api", "drainages"],
+                                    "query": [
+                                        { "key": "overdue", "value": "true" }
+                                    ]
+                                }
+                            }
+                        }
+
+                    ]
+                }
+
+            ]
+        }
+
+    ]
+}

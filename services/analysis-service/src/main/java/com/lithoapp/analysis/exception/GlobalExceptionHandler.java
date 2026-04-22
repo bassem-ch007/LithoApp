@@ -22,18 +22,55 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AnalysisNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(AnalysisNotFoundException ex) {
+        log.warn("Not found: {}", ex.getMessage());
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    // ── 409 Conflict ─────────────────────────────────────────────────────
+    @ExceptionHandler(EpisodeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodeNotFound(EpisodeNotFoundException ex) {
+        log.warn("Episode not found: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(PatientNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePatientNotFound(PatientNotFoundException ex) {
+        log.warn("Patient not found: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    // ── 422 Unprocessable Entity (patient state) ───────────────────────────
+
+    @ExceptionHandler(PatientInactiveException.class)
+    public ResponseEntity<ErrorResponse> handlePatientInactive(PatientInactiveException ex) {
+        log.warn("Analysis request blocked — inactive patient: {}", ex.getMessage());
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    // ── 503 Service Unavailable ────────────────────────────────────────────
+
+    @ExceptionHandler(PatientServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handlePatientServiceUnavailable(PatientServiceUnavailableException ex) {
+        log.error("patient-service unavailable: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
+    @ExceptionHandler(EpisodeServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodeServiceUnavailable(EpisodeServiceUnavailableException ex) {
+        log.error("episode-service unavailable: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
+    // ── 409 Conflict ──────────────────────────────────────────────────────
 
     @ExceptionHandler(RequestAlreadyCompletedException.class)
     public ResponseEntity<ErrorResponse> handleAlreadyCompleted(RequestAlreadyCompletedException ex) {
+        log.warn("Conflict: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidStatusTransitionException.class)
     public ResponseEntity<ErrorResponse> handleBadTransition(InvalidStatusTransitionException ex) {
+        log.warn("Invalid transition: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -52,6 +89,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CompletionNotAllowedException.class)
     public ResponseEntity<ErrorResponse> handleCompletionNotAllowed(CompletionNotAllowedException ex) {
+        log.warn("Completion not allowed: {}", ex.getMessage());
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    /**
+     * Raised when the provided episodeId and patientId do not refer to the same case.
+     * This protects the patient → episode → analysis consistency chain.
+     */
+    @ExceptionHandler(EpisodePatientMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodePatientMismatch(EpisodePatientMismatchException ex) {
+        log.warn("Episode-patient mismatch: {}", ex.getMessage());
         return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
@@ -59,6 +107,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidAnalysisTypeOperationException.class)
     public ResponseEntity<ErrorResponse> handleInvalidType(InvalidAnalysisTypeOperationException ex) {
+        log.warn("Invalid analysis type operation: {}", ex.getMessage());
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

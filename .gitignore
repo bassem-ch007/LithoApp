@@ -21,5 +21,5 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
-infrastructure
+infrastructure/docker/keycloak/realm/medical-platform-realm.json
 frontend/frontend.iml

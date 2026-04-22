@@ -17,6 +17,9 @@ public class DrainageResponse {
 
     private UUID id;
 
+    /** Primary case anchor — the episode this drainage belongs to. */
+    private Long episodeId;
+
     private Long patientId;
     private Long doctorId;
 

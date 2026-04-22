@@ -15,5 +15,20 @@ public interface DrainageService {
 
     DrainageResponse getDrainageById(UUID id);
 
+    /**
+     * Returns all drainages for a given episode.
+     * This is the primary read operation — drives the episode detail screen.
+     */
+    List<DrainageResponse> getDrainagesByEpisodeId(Long episodeId);
+
+    /**
+     * Returns all drainages for a patient across all episodes.
+     * Used for patient-level overview and reporting.
+     */
+    List<DrainageResponse> getDrainagesByPatientId(Long patientId);
+
+    /**
+     * Flexible filtered list — supports episodeId, patientId, type, status, overdue.
+     */
     List<DrainageResponse> getDrainages(DrainageFilterRequest filter);
 }

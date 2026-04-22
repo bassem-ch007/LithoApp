@@ -16,8 +16,9 @@ import java.time.LocalDateTime;
  * Owns its status-transition logic: callers invoke {@link #transitionTo(AnalysisStatus)}
  * and {@link #guardNotCompleted()} rather than manipulating the status field directly.
  *
- * External references (patientId, episodeId, createdBy) are plain strings.
- * No JPA associations to other services — Feign integration comes later.
+ * External references (episodeId, patientId) are plain BIGINT IDs — no JPA
+ * associations across service boundaries. Cross-service validation is delegated
+ * to EpisodeValidationService and PatientValidationService at the service layer.
  */
 @Entity
 @Table(name = "analysis_requests")
@@ -30,12 +31,20 @@ public class AnalysisRequest {
     private Long id;
 
     // ── External references ────────────────────────────────────────────────
-    // Plain IDs — Feign/patient-service integration added in a later phase.
-    @Column(nullable = false)
-    private String patientId;
+    // Plain BIGINT IDs — no JPA associations across service boundaries.
+    // Feign-based validation is handled at the service layer via
+    // EpisodeValidationService and PatientValidationService.
 
-    @Column(nullable = false)
-    private String episodeId;
+    /** Cross-service reference to patient-service. Must match episode.patientId. */
+    @Column(name = "patient_id", nullable = false)
+    private Long patientId;
+
+    /**
+     * Primary case anchor — cross-service reference to episode-service.
+     * Required: an analysis request cannot exist outside an episode.
+     */
+    @Column(name = "episode_id", nullable = false)
+    private Long episodeId;
 
     /** The urologist (or any actor) who opened this analysis request. */
     @Column(nullable = false)
@@ -106,7 +115,7 @@ public class AnalysisRequest {
 
     // ── Factory ───────────────────────────────────────────────────────────
 
-    public static AnalysisRequest create(String patientId, String episodeId,
+    public static AnalysisRequest create(Long patientId, Long episodeId,
                                          String createdBy, AnalysisType type) {
         AnalysisRequest r = new AnalysisRequest();
         r.patientId  = patientId;

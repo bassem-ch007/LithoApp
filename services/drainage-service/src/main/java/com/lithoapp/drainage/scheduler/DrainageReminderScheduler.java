@@ -70,9 +70,10 @@ public class DrainageReminderScheduler {
         for (Drainage drainage : drainages) {
             // TODO: replace with NotificationClient.sendPreReminder(drainage)
             log.info(
-                "[NOTIFICATION - PRE-REMINDER] Drainage id={} | patient={} | type={} | side={} " +
-                "| planned removal in {} days ({})",
+                "[NOTIFICATION - PRE-REMINDER] Drainage id={} | episode={} | patient={} " +
+                "| type={} | side={} | planned removal in {} days ({})",
                 drainage.getId(),
+                drainage.getEpisodeId(),
                 drainage.getPatientId(),
                 drainage.getDrainageType(),
                 drainage.getSide(),
@@ -102,9 +103,10 @@ public class DrainageReminderScheduler {
         for (Drainage drainage : drainages) {
             // TODO: replace with NotificationClient.sendDayOfReminder(drainage)
             log.info(
-                "[NOTIFICATION - DAY-OF REMINDER] Drainage id={} | patient={} | type={} | side={} " +
-                "| planned removal is TODAY ({})",
+                "[NOTIFICATION - DAY-OF REMINDER] Drainage id={} | episode={} | patient={} " +
+                "| type={} | side={} | planned removal is TODAY ({})",
                 drainage.getId(),
+                drainage.getEpisodeId(),
                 drainage.getPatientId(),
                 drainage.getDrainageType(),
                 drainage.getSide(),

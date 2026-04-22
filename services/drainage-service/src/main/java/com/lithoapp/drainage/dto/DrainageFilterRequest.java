@@ -11,7 +11,18 @@ import lombok.Data;
 @Data
 public class DrainageFilterRequest {
 
+    /**
+     * Filter by episode — used by the episode detail screen to load all
+     * drainage records for a specific stone case.
+     */
+    private Long episodeId;
+
+    /**
+     * Filter by patient — used for the patient timeline view.
+     * Returns all drainages across all episodes of a patient.
+     */
     private Long patientId;
+
     private DrainageType drainageType;
     private DrainageStatus status;
 

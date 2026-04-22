@@ -22,6 +22,12 @@ public class DrainageSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // Episode filter — primary axis (episode detail screen)
+            if (filter.getEpisodeId() != null) {
+                predicates.add(cb.equal(root.get("episodeId"), filter.getEpisodeId()));
+            }
+
+            // Patient filter — secondary axis (patient timeline)
             if (filter.getPatientId() != null) {
                 predicates.add(cb.equal(root.get("patientId"), filter.getPatientId()));
             }

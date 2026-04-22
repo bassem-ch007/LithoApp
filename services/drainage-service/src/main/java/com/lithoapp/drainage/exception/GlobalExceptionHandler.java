@@ -25,6 +25,54 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(EpisodeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodeNotFound(EpisodeNotFoundException ex) {
+        log.warn("Episode not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PatientNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePatientNotFound(PatientNotFoundException ex) {
+        log.warn("Patient not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage()));
+    }
+
+    // ── 422 (patient state) ───────────────────────────────────────────────────
+
+    @ExceptionHandler(PatientInactiveException.class)
+    public ResponseEntity<ErrorResponse> handlePatientInactive(PatientInactiveException ex) {
+        log.warn("Drainage creation blocked — inactive patient: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ErrorResponse.of(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()));
+    }
+
+    // ── 422 (episode-patient mismatch) ───────────────────────────────────────
+
+    @ExceptionHandler(EpisodePatientMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodePatientMismatch(EpisodePatientMismatchException ex) {
+        log.warn("Drainage creation blocked — episode-patient mismatch: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ErrorResponse.of(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()));
+    }
+
+    // ── 503 Service Unavailable ───────────────────────────────────────────────
+
+    @ExceptionHandler(PatientServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handlePatientServiceUnavailable(PatientServiceUnavailableException ex) {
+        log.error("patient-service unavailable: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(EpisodeServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleEpisodeServiceUnavailable(EpisodeServiceUnavailableException ex) {
+        log.error("episode-service unavailable: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage()));
+    }
+
     // ── 409 ──────────────────────────────────────────────────────────────────
 
     @ExceptionHandler(DuplicateActiveDrainageException.class)

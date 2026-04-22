@@ -15,6 +15,8 @@ import com.lithoapp.analysis.mapper.AnalysisRequestMapper;
 import com.lithoapp.analysis.mapper.MetabolicMapper;
 import com.lithoapp.analysis.mapper.StoneResultMapper;
 import com.lithoapp.analysis.repository.*;
+import com.lithoapp.analysis.service.validation.EpisodeValidationService;
+import com.lithoapp.analysis.service.validation.PatientValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,10 +40,40 @@ public class AnalysisRequestService {
     private final MetabolicMapper metabolicMapper;
     private final StoneResultMapper stoneResultMapper;
 
+    /**
+     * Cross-service validation — stub in the current phase.
+     * Replace the stub with a @Primary Feign-backed implementation when ready.
+     */
+    private final PatientValidationService patientValidationService;
+
+    /**
+     * Cross-service validation — stub in the current phase.
+     * Validates that the episode exists AND belongs to the given patient.
+     * Replace the stub with a @Primary Feign-backed implementation when ready.
+     */
+    private final EpisodeValidationService episodeValidationService;
+
     // ── Create ────────────────────────────────────────────────────────────
 
+    /**
+     * Creates a new analysis request anchored to the given episode.
+     *
+     * Validation order (each step throws a typed exception on failure):
+     * 1. Bean validation — patientId, episodeId, createdBy, type all present (@Valid on controller).
+     * 2. Patient exists — PatientValidationService (stub → future Feign).
+     * 3. Episode exists AND belongs to the patient — EpisodeValidationService (stub → future Feign).
+     * 4. Create AnalysisRequest + result stub + audit entry.
+     */
     @Transactional
     public AnalysisRequestDto createRequest(CreateAnalysisRequestDto dto) {
+
+        // Step 2 — patient existence (future Feign guard)
+        patientValidationService.validatePatientExists(dto.getPatientId());
+
+        // Step 3 — episode existence + patient/episode consistency
+        episodeValidationService.validateEpisodeBelongsToPatient(
+                dto.getEpisodeId(), dto.getPatientId());
+
         AnalysisRequest request = AnalysisRequest.create(
                 dto.getPatientId(), dto.getEpisodeId(), dto.getCreatedBy(), dto.getType());
         requestRepository.save(request);
@@ -55,8 +87,9 @@ public class AnalysisRequestService {
         auditService.record(request.getId(), dto.getCreatedBy(),
                 AuditActionType.REQUEST_CREATED, null, null, request.getType().name());
 
-        log.info("Created {} analysis request id={} for patient={}",
-                request.getType(), request.getId(), request.getPatientId());
+        log.info("Created {} analysis request id={} for episode={} patient={}",
+                request.getType(), request.getId(),
+                request.getEpisodeId(), request.getPatientId());
 
         return buildDetailDto(request);
     }
@@ -68,20 +101,39 @@ public class AnalysisRequestService {
         return buildDetailDto(loadOrThrow(id));
     }
 
+    /**
+     * Returns all analysis requests for a patient across all episodes.
+     * Used for patient-level overview and reporting.
+     *
+     * @param patientId the patient to filter by
+     * @param status    optional — if null, all statuses are returned
+     */
     @Transactional(readOnly = true)
-    public List<AnalysisRequestDto> listByPatient(String patientId, AnalysisStatus status) {
+    public List<AnalysisRequestDto> listByPatient(Long patientId, AnalysisStatus status) {
         List<AnalysisRequest> requests = (status != null)
                 ? requestRepository.findByPatientIdAndStatus(patientId, status)
                 : requestRepository.findByPatientId(patientId);
         return requests.stream().map(this::buildDetailDto).toList();
     }
 
+    /**
+     * Returns all analysis requests for a specific episode.
+     * This is the primary read operation — drives the analysis panel on the episode detail screen.
+     *
+     * @param episodeId the episode to filter by
+     * @param status    optional — if null, all statuses are returned
+     */
     @Transactional(readOnly = true)
-    public List<AnalysisRequestDto> listByEpisode(String episodeId) {
-        return requestRepository.findByEpisodeId(episodeId)
-                .stream().map(this::buildDetailDto).toList();
+    public List<AnalysisRequestDto> listByEpisode(Long episodeId, AnalysisStatus status) {
+        List<AnalysisRequest> requests = (status != null)
+                ? requestRepository.findByEpisodeIdAndStatus(episodeId, status)
+                : requestRepository.findByEpisodeId(episodeId);
+        return requests.stream().map(this::buildDetailDto).toList();
     }
 
+    /**
+     * Returns all analysis requests with the given status (lab/admin view).
+     */
     @Transactional(readOnly = true)
     public List<AnalysisRequestDto> listByStatus(AnalysisStatus status) {
         return requestRepository.findByStatus(status)

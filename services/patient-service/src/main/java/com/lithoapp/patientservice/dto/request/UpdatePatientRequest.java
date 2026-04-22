@@ -2,7 +2,9 @@ package com.lithoapp.patientservice.dto.request;
 
 import com.lithoapp.patientservice.enums.Gender;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,10 +19,8 @@ import java.util.List;
 @Builder
 public class UpdatePatientRequest {
 
-    @NotBlank(message = "First name cannot be blank")
     private String firstName;
 
-    @NotBlank(message = "Last name cannot be blank")
     private String lastName;
 
     @Past(message = "Birth date must be in the past")

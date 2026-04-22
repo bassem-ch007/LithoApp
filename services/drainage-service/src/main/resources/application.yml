@@ -24,3 +24,23 @@ spring:
 drainage:
   reminder:
     days-before: 3   # how many days before plannedRemovalDate to send pre-reminder
+
+# ------------------------------------------------------------
+# Inter-service HTTP clients
+# ------------------------------------------------------------
+patient-service:
+  base-url: http://localhost:8086
+episode-service:
+  base-url: http://localhost:8085
+
+# ------------------------------------------------------------
+# Actuator — expose health endpoint only
+# ------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
