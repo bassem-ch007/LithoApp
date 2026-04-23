@@ -22,7 +22,20 @@
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <lombok.version>1.18.30</lombok.version>
         <springdoc.version>2.3.0</springdoc.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
@@ -77,22 +90,11 @@
             <version>${springdoc.version}</version>
         </dependency>
 
-        <!--
-            Future: OpenFeign for inter-service patient validation.
-
-            To activate:
-            1. Uncomment this block.
-            2. Add <dependencyManagement> for spring-cloud-dependencies BOM.
-            3. Add @EnableFeignClients to EpisodeServiceApplication.
-            4. Create PatientServiceClient (Feign interface).
-            5. Create FeignPatientValidationService @Primary.
-        -->
-        <!--
+        <!-- OpenFeign for inter-service patient validation (explicit URL, no discovery). -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
-        -->
 
         <!--
             Future: Eureka client for service discovery.

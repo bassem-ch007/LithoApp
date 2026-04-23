@@ -3,11 +3,9 @@ package com.lithoapp.patientservice.client;
 /**
  * Abstraction over the remote episode-service HTTP API.
  *
- * <p>Current implementation: {@link HttpEpisodeServiceClient} — direct
- * RestTemplate call to {@code episode-service.base-url}/episodes/patient/{id}/exists.
- *
- * <p>Future: swap for a Feign-annotated interface once service discovery
- * (Eureka) is enabled. No other changes needed — the interface contract is identical.
+ * <p>Current implementation: {@link FeignEpisodeServiceClient} — thin adapter over
+ * {@link EpisodeExistsFeignClient} that translates Feign errors into
+ * {@link com.lithoapp.patientservice.exception.EpisodeServiceUnavailableException}.
  */
 public interface EpisodeServiceClient {
 

@@ -7,14 +7,13 @@ import java.util.Optional;
 /**
  * Abstraction over the remote episode-service HTTP API.
  *
- * <p>Returns {@link Optional} so callers decide how to handle a missing
- * episode without catching exceptions at the call site.
+ * <p>Returns {@link Optional} so callers decide how to handle a missing episode
+ * without catching exceptions at the call site.
  *
- * <p>Current implementation: {@link HttpEpisodeServiceClient} — direct
- * RestTemplate call to {@code episode-service.base-url}/episodes/{id}.
- *
- * <p>Future: swap for a Feign-annotated interface once Eureka is enabled.
- * No other changes needed — the interface contract is identical.
+ * <p>Current implementation: {@link FeignEpisodeServiceClient} — thin adapter over
+ * {@link EpisodeFeignClient} that translates {@code feign.FeignException.NotFound}
+ * into {@code Optional.empty()} and other Feign errors into
+ * {@link com.lithoapp.analysis.exception.EpisodeServiceUnavailableException}.
  */
 public interface EpisodeServiceClient {
 

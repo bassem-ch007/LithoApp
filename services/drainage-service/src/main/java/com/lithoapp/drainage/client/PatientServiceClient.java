@@ -7,14 +7,13 @@ import java.util.Optional;
 /**
  * Abstraction over the remote patient-service HTTP API.
  *
- * <p>Returns {@link Optional} so callers decide how to handle a missing
- * patient without catching exceptions at the call site.
+ * <p>Returns {@link Optional} so callers decide how to handle a missing patient
+ * without catching exceptions at the call site.
  *
- * <p>Current implementation: {@link HttpPatientServiceClient} — direct
- * RestTemplate call to {@code patient-service.base-url}/patients/{id}.
- *
- * <p>Future: swap for a Feign-annotated interface once Eureka is enabled.
- * No other changes needed — the interface contract is identical.
+ * <p>Current implementation: {@link FeignPatientServiceClient} — thin adapter over
+ * {@link PatientFeignClient} that translates {@code feign.FeignException.NotFound}
+ * into {@code Optional.empty()} and other Feign errors into
+ * {@link com.lithoapp.drainage.exception.PatientServiceUnavailableException}.
  */
 public interface PatientServiceClient {
 
