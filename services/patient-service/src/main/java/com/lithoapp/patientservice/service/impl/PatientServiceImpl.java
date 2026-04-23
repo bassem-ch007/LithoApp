@@ -1,11 +1,13 @@
 package com.lithoapp.patientservice.service.impl;
 
+import com.lithoapp.patientservice.client.EpisodeServiceClient;
 import com.lithoapp.patientservice.dto.request.CreatePatientRequest;
 import com.lithoapp.patientservice.dto.request.UpdatePatientRequest;
 import com.lithoapp.patientservice.dto.response.PatientResponse;
 import com.lithoapp.patientservice.dto.response.PatientSummaryResponse;
 import com.lithoapp.patientservice.entity.*;
 import com.lithoapp.patientservice.exception.DuplicateIdentifierException;
+import com.lithoapp.patientservice.exception.PatientDeletionNotAllowedException;
 import com.lithoapp.patientservice.exception.PatientNotFoundException;
 import com.lithoapp.patientservice.mapper.PatientMapper;
 import com.lithoapp.patientservice.repository.PatientRepository;
@@ -26,6 +28,7 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
+    private final EpisodeServiceClient episodeServiceClient;
 
     // ── Create ────────────────────────────────────────────────────────────────
 
@@ -153,13 +156,15 @@ public class PatientServiceImpl implements PatientService {
         return patientMapper.toResponse(patientRepository.save(patient));
     }
 
-    // ── Delete (soft via active flag) ─────────────────────────────────────────
+    // ── Delete ────────────────────────────────────────────────────────────────
 
     @Override
     public void deletePatient(Long id) {
         Patient patient = findByIdOrThrow(id);
-        patient.setActive(false);
-        patientRepository.save(patient);
+        if (episodeServiceClient.hasEpisodes(id)) {
+            throw new PatientDeletionNotAllowedException(id);
+        }
+        patientRepository.delete(patient);
     }
 
     // ── Search ────────────────────────────────────────────────────────────────

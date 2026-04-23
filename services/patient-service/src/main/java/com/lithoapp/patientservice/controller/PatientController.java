@@ -83,11 +83,10 @@ public class PatientController {
         return ResponseEntity.ok(patientService.updatePatient(id, request));
     }
 
-    // ── Soft-delete ───────────────────────────────────────────────────────────
+    // ── Delete ───────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Deactivate a patient (soft delete)")
+    @Operation(summary = "Delete a patient — only allowed when no linked episodes exist")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         patientService.deletePatient(id);
         return ResponseEntity.noContent().build();

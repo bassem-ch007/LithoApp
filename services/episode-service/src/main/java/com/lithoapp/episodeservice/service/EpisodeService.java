@@ -34,4 +34,10 @@ public interface EpisodeService {
      * patientId and openedAt are immutable after creation.
      */
     EpisodeResponse updateEpisode(Long id, UpdateEpisodeRequest request);
+
+    /**
+     * Returns {@code true} if at least one episode exists for the given patient.
+     * Used by patient-service to guard patient deletion.
+     */
+    boolean hasEpisodes(Long patientId);
 }

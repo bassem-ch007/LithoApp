@@ -41,8 +41,6 @@ public class UpdatePatientRequest {
 
     private String phone;
 
-    private Boolean active;
-
     @Valid
     private ClinicalInfoRequest clinicalInfo;
 

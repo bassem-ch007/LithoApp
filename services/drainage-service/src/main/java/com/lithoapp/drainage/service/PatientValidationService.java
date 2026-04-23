@@ -22,13 +22,10 @@ package com.lithoapp.drainage.service;
 public interface PatientValidationService {
 
     /**
-     * Asserts that the patient identified by {@code patientId}:
-     * <ul>
-     *   <li>exists in patient-service → {@link com.lithoapp.drainage.exception.PatientNotFoundException} (HTTP 404)</li>
-     *   <li>is currently active → {@link com.lithoapp.drainage.exception.PatientInactiveException} (HTTP 422)</li>
-     * </ul>
+     * Asserts that the patient identified by {@code patientId} exists in patient-service.
      *
      * @param patientId the patient to validate
+     * @throws com.lithoapp.drainage.exception.PatientNotFoundException if the patient does not exist (HTTP 404)
      */
     void validatePatientExists(Long patientId);
 }

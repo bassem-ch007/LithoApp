@@ -30,6 +30,22 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
+    @ExceptionHandler(PatientDeletionNotAllowedException.class)
+    public ProblemDetail handlePatientDeletionNotAllowed(PatientDeletionNotAllowedException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setTitle("Patient Deletion Not Allowed");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
+    @ExceptionHandler(EpisodeServiceUnavailableException.class)
+    public ProblemDetail handleEpisodeServiceUnavailable(EpisodeServiceUnavailableException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        pd.setTitle("Episode Service Unavailable");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()

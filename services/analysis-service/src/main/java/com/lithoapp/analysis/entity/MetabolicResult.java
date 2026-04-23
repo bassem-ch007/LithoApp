@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * Created automatically when an AnalysisRequest of type METABOLIC is created.
  *
  * The actual PDF metadata lives in {@link PdfDocument} (child records).
- * Completion requires exactly three PdfDocument rows (one per MetabolicDocumentType).
+ * Completion requires at least one active PdfDocument (any category is sufficient).
  */
 @Entity
 @Table(name = "metabolic_results")

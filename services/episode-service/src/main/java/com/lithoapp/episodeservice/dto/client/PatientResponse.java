@@ -13,10 +13,4 @@ public class PatientResponse {
 
     /** Patient primary key — matches the patientId supplied on episode creation. */
     private Long id;
-
-    /**
-     * Whether this patient is currently active.
-     * Episodes may only be opened for active patients.
-     */
-    private boolean active;
 }

@@ -66,6 +66,12 @@ public class EpisodeServiceImpl implements EpisodeService {
         return episodeMapper.toResponse(saved);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasEpisodes(Long patientId) {
+        return episodeRepository.countByPatientId(patientId) > 0;
+    }
+
     private Episode findOrThrow(Long id) {
         return episodeRepository.findById(id)
                 .orElseThrow(() -> new EpisodeNotFoundException(id));

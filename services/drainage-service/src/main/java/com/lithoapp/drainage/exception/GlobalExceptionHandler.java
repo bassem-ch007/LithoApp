@@ -39,15 +39,6 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
-    // ── 422 (patient state) ───────────────────────────────────────────────────
-
-    @ExceptionHandler(PatientInactiveException.class)
-    public ResponseEntity<ErrorResponse> handlePatientInactive(PatientInactiveException ex) {
-        log.warn("Drainage creation blocked — inactive patient: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(ErrorResponse.of(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()));
-    }
-
     // ── 422 (episode-patient mismatch) ───────────────────────────────────────
 
     @ExceptionHandler(EpisodePatientMismatchException.class)

@@ -13,10 +13,4 @@ public class PatientResponse {
 
     /** Patient primary key — matches the patientId on the drainage request. */
     private Long id;
-
-    /**
-     * Whether this patient is currently active.
-     * Drainage records may only be created for active patients.
-     */
-    private boolean active;
 }

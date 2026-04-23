@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
  * @Version provides optimistic locking: if two biologists submit concurrent
  * updates, the second write will get a 409 Conflict response and must retry.
  *
- * Completion requirement: {@code finalStoneType} must be non-blank.
+ * Completion requirement: at least one medical result field must be non-blank.
+ * Full form completion is not required; a completely empty result cannot be completed.
  */
 @Entity
 @Table(name = "stone_results")
@@ -44,7 +45,7 @@ public class StoneResult {
     private String spectroCore;
 
     // ── Final classification ──────────────────────────────────────────────
-    /** Required before the request can be marked COMPLETED. */
+    /** Counts as a meaningful field for completion if non-blank. */
     private String finalStoneType;
 
     // ── Provenance ────────────────────────────────────────────────────────

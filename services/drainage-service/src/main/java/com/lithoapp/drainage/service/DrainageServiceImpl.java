@@ -33,7 +33,7 @@ public class DrainageServiceImpl implements DrainageService {
     private final EpisodeValidationService episodeValidationService;
 
     /**
-     * Cross-service validation — enforces patient existence and active status.
+     * Cross-service validation — enforces patient existence.
      * Replace the stub with a @Primary Feign-backed implementation when ready.
      */
     private final PatientValidationService patientValidationService;
@@ -42,7 +42,7 @@ public class DrainageServiceImpl implements DrainageService {
 
     @Override
     public DrainageResponse createDrainage(CreateDrainageRequest request) {
-        // Step 1 — patient must exist and be active (PatientValidationServiceImpl → patient-service)
+        // Step 1 — patient must exist (PatientValidationServiceImpl → patient-service)
         patientValidationService.validatePatientExists(request.getPatientId());
 
         // Step 2 — episode must exist AND belong to the same patient

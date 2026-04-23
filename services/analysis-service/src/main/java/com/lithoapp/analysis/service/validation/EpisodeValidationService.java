@@ -1,29 +1,19 @@
 package com.lithoapp.analysis.service.validation;
 
 /**
- * Extension point for cross-service episode consistency validation.
+ * Cross-service episode consistency validation.
  *
- * Enforces the core domain rule: an analysis request must belong to an episode,
+ * Enforces the domain rule: an analysis request must belong to an episode,
  * and that episode must belong to the same patient supplied in the request.
  *
- * Current implementation: {@link StubEpisodeValidationService} (no-op).
+ * Active implementation: {@link EpisodeValidationServiceImpl} (RestTemplate, @Primary).
+ * Fallback: {@link StubEpisodeValidationService} (no-op, for local runs without episode-service).
  *
- * To activate real validation via OpenFeign:
- *
- * 1. Add the spring-cloud-starter-openfeign dependency to pom.xml.
+ * To migrate to Feign when Eureka is enabled:
+ * 1. Add spring-cloud-starter-openfeign to pom.xml.
  * 2. Add @EnableFeignClients to AnalysisServiceApplication.
- * 3. Create a Feign client interface targeting the episode-service:
- *
- *    @FeignClient(name = "episode-service", url = "${services.episode-service.url}")
- *    public interface EpisodeServiceClient {
- *        @GetMapping("/episodes/{id}")
- *        EpisodeResponse getById(@PathVariable Long id);
- *    }
- *
- * 4. Implement this interface:
- *    - If the Feign call returns 404, throw EpisodeNotFoundException(episodeId).
- *    - If episode.patientId != patientId, throw EpisodePatientMismatchException(episodeId, patientId).
- * 5. Annotate the real impl with @Service @Primary — the stub is replaced automatically.
+ * 3. Replace {@link com.lithoapp.analysis.client.HttpEpisodeServiceClient} with a @FeignClient.
+ * 4. No other changes needed — EpisodeValidationServiceImpl and this interface remain unchanged.
  */
 public interface EpisodeValidationService {
 

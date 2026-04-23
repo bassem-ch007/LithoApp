@@ -40,17 +40,7 @@ public class AnalysisRequestService {
     private final MetabolicMapper metabolicMapper;
     private final StoneResultMapper stoneResultMapper;
 
-    /**
-     * Cross-service validation — stub in the current phase.
-     * Replace the stub with a @Primary Feign-backed implementation when ready.
-     */
     private final PatientValidationService patientValidationService;
-
-    /**
-     * Cross-service validation — stub in the current phase.
-     * Validates that the episode exists AND belongs to the given patient.
-     * Replace the stub with a @Primary Feign-backed implementation when ready.
-     */
     private final EpisodeValidationService episodeValidationService;
 
     // ── Create ────────────────────────────────────────────────────────────
@@ -145,9 +135,14 @@ public class AnalysisRequestService {
     /**
      * Mark a request as COMPLETED.
      *
-     * The only enforced rule is that the request must already be IN_PROGRESS,
-     * meaning at least one result contribution has been made. No content
-     * completeness is checked — the biologist decides when the bilan is done.
+     * Completion rules differ by analysis type:
+     *
+     * <ul>
+     *   <li><b>METABOLIC</b> — at least one PDF (any category) must have been uploaded.
+     *       All three categories are not required; one is enough.</li>
+     *   <li><b>STONE</b> — at least one meaningful medical result field must be non-blank.
+     *       Full form completion is not required, but a completely empty result is rejected.</li>
+     * </ul>
      *
      * CREATED → COMPLETED is intentionally blocked: at least one upload or
      * field update must have occurred first (auto-transitioning to IN_PROGRESS).
@@ -161,6 +156,12 @@ public class AnalysisRequestService {
             throw new CompletionNotAllowedException(
                     "Request " + id + " has no contributions yet (status is CREATED). " +
                     "At least one PDF upload or field update is required before completing.");
+        }
+
+        if (request.getType() == AnalysisType.METABOLIC) {
+            validateMetabolicCompletable(id);
+        } else {
+            validateStoneCompletable(id);
         }
 
         AnalysisStatus previousStatus = request.getStatus();
@@ -177,6 +178,48 @@ public class AnalysisRequestService {
 
         log.info("Completed analysis request id={} by {}", id, dto.getCompletedBy());
         return buildDetailDto(request);
+    }
+
+    /**
+     * METABOLIC completion guard: at least one active PDF must exist (any category).
+     */
+    private void validateMetabolicCompletable(Long requestId) {
+        MetabolicResult mr = metabolicResultRepository.findByAnalysisRequestId(requestId)
+                .orElseThrow(() -> new AnalysisNotFoundException(requestId));
+        if (pdfDocumentRepository.countActiveTypes(mr.getId()) == 0) {
+            throw new CompletionNotAllowedException(
+                    "no metabolic PDF has been uploaded.");
+        }
+    }
+
+    /**
+     * STONE completion guard: at least one medical result field must be non-blank.
+     */
+    private void validateStoneCompletable(Long requestId) {
+        StoneResult sr = stoneResultRepository.findByAnalysisRequestId(requestId)
+                .orElseThrow(() -> new AnalysisNotFoundException(requestId));
+        if (!hasAnyMeaningfulStoneField(sr)) {
+            throw new CompletionNotAllowedException(
+                    "no stone result data has been provided.");
+        }
+    }
+
+    private boolean hasAnyMeaningfulStoneField(StoneResult sr) {
+        return isNonBlank(sr.getMorphSize())
+            || isNonBlank(sr.getMorphSurface())
+            || isNonBlank(sr.getMorphColor())
+            || isNonBlank(sr.getMorphSection())
+            || isNonBlank(sr.getMorphOuterLayers())
+            || isNonBlank(sr.getMorphCore())
+            || isNonBlank(sr.getSpectroSurface())
+            || isNonBlank(sr.getSpectroSection())
+            || isNonBlank(sr.getSpectroOuterLayers())
+            || isNonBlank(sr.getSpectroCore())
+            || isNonBlank(sr.getFinalStoneType());
+    }
+
+    private static boolean isNonBlank(String value) {
+        return value != null && !value.isBlank();
     }
 
     // ── Internal helpers ──────────────────────────────────────────────────
