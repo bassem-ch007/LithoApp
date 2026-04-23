@@ -9,7 +9,7 @@ package com.lithoapp.drainage.service;
  * Current implementation: {@link com.lithoapp.drainage.service.impl.StubEpisodeValidationService}
  * (no-op) is overridden by
  * {@link com.lithoapp.drainage.service.impl.EpisodeValidationServiceImpl} ({@code @Primary}),
- * which calls episode-service over HTTP via RestTemplate.
+ * which calls episode-service via OpenFeign.
  */
 public interface EpisodeValidationService {
 

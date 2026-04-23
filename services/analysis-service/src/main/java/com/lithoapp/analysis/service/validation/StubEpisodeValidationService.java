@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
  * No-op stub for {@link EpisodeValidationService}.
  *
  * Performs no HTTP call — assumes all (episodeId, patientId) pairs are valid.
- * Overridden by {@link EpisodeValidationServiceImpl} which is annotated {@code @Primary}
- * and calls episode-service over HTTP via RestTemplate.
+ * Overridden by {@link EpisodeValidationServiceImpl} ({@code @Primary}), which
+ * calls episode-service via OpenFeign.
  *
  * Kept on the classpath as a fallback. To disable real validation locally,
  * remove {@code @Primary} from {@link EpisodeValidationServiceImpl}.

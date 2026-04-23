@@ -146,6 +146,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/lithoapp_patients
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
       # JVM flags — JAVA_TOOL_OPTIONS is read natively by the JVM.
       # JAVA_OPTS would be silently ignored with exec-form ENTRYPOINT.
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"

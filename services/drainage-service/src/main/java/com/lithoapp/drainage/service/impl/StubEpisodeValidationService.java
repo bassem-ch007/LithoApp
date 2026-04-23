@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 /**
  * Development stub — episode validation is not performed against episode-service.
  *
- * Overridden by {@link EpisodeValidationServiceImpl} which is annotated {@code @Primary}
- * and calls episode-service over HTTP via RestTemplate.
+ * Overridden by {@link EpisodeValidationServiceImpl} ({@code @Primary}), which
+ * calls episode-service via OpenFeign.
  *
  * Kept on the classpath as a fallback. To disable real validation locally,
  * remove {@code @Primary} from {@link EpisodeValidationServiceImpl}.
