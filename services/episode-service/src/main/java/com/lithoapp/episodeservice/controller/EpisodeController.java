@@ -42,6 +42,15 @@ public class EpisodeController {
         return ResponseEntity.ok(episodeService.getEpisodeById(id));
     }
 
+    @Operation(summary = "Check whether a patient has any linked episodes",
+               description = "Returns true if at least one episode exists for the patient. " +
+                             "Used by patient-service to guard patient deletion.")
+    @GetMapping("/patient/{patientId}/exists")
+    public ResponseEntity<Boolean> hasEpisodes(
+            @Parameter(description = "Patient ID") @PathVariable Long patientId) {
+        return ResponseEntity.ok(episodeService.hasEpisodes(patientId));
+    }
+
     @Operation(
             summary = "List episodes for a patient",
             description = "Returns a paginated timeline of all case folders for a given patient. " +

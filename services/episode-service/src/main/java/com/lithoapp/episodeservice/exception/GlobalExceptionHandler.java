@@ -32,14 +32,6 @@ public class GlobalExceptionHandler {
                 .body(buildError(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
-    @ExceptionHandler(PatientInactiveException.class)
-    public ResponseEntity<ErrorResponse> handlePatientInactive(PatientInactiveException ex) {
-        log.warn("Episode creation blocked — inactive patient: {}", ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()));
-    }
-
     @ExceptionHandler(PatientServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handlePatientServiceUnavailable(PatientServiceUnavailableException ex) {
         log.error("patient-service unavailable: {}", ex.getMessage());

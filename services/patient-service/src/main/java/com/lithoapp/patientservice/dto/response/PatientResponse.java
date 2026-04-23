@@ -28,7 +28,6 @@ public class PatientResponse {
     private String address;
     private String email;
     private String phone;
-    private Boolean active;
 
     // ── Audit ──────────────────────────────────────────────────────────────────
     private LocalDateTime createdAt;

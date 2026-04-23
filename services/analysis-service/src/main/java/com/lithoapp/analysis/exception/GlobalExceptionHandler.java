@@ -38,14 +38,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    // ── 422 Unprocessable Entity (patient state) ───────────────────────────
-
-    @ExceptionHandler(PatientInactiveException.class)
-    public ResponseEntity<ErrorResponse> handlePatientInactive(PatientInactiveException ex) {
-        log.warn("Analysis request blocked — inactive patient: {}", ex.getMessage());
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
-    }
-
     // ── 503 Service Unavailable ────────────────────────────────────────────
 
     @ExceptionHandler(PatientServiceUnavailableException.class)

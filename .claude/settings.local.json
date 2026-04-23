@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/Ce PC/Desktop/**)",
+      "Bash(ls -la \"C:\\\\\\\\Users\\\\\\\\Ce PC\\\\\\\\Desktop\\\\\\\\lithoApp\\\\\\\\\")",
+      "Bash(find \"C:\\\\Users\\\\Ce PC\\\\Desktop\\\\lithoApp\\\\services\\\\patient-service\\\\src\\\\main\\\\java\" -type f -name \"*.java\" -exec basename {} \\\\;)",
+      "Bash(find \"C:\\\\Users\\\\Ce PC\\\\Desktop\\\\lithoApp\\\\services\\\\episode-service\\\\src\\\\main\\\\java\" -type f -name \"*.java\" -exec basename {} \\\\;)"
+    ]
+  }
+}

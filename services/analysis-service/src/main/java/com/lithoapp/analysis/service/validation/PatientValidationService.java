@@ -1,34 +1,24 @@
 package com.lithoapp.analysis.service.validation;
 
 /**
- * Extension point for cross-service patient validation.
+ * Cross-service patient existence validation.
  *
- * Current implementation: {@link StubPatientValidationService} (no-op).
+ * Active implementation: {@link PatientValidationServiceImpl} (RestTemplate, @Primary).
+ * Fallback: {@link StubPatientValidationService} (no-op, for local runs without patient-service).
  *
- * To activate real validation via OpenFeign:
- *
- * 1. Add the spring-cloud-starter-openfeign dependency to pom.xml.
+ * To migrate to Feign when Eureka is enabled:
+ * 1. Add spring-cloud-starter-openfeign to pom.xml.
  * 2. Add @EnableFeignClients to AnalysisServiceApplication.
- * 3. Create a Feign client interface:
- *
- *    @FeignClient(name = "patient-service", url = "${services.patient-service.url}")
- *    public interface PatientServiceClient {
- *        @GetMapping("/api/patients/{id}/exists")
- *        boolean existsById(@PathVariable Long id);
- *    }
- *
- * 4. Implement this interface using the Feign client, annotate with @Service @Primary.
- *    The stub will automatically be replaced.
- * 5. Throw PatientNotFoundException (or a suitable exception) when the patient is not found.
+ * 3. Replace {@link com.lithoapp.analysis.client.HttpPatientServiceClient} with a @FeignClient.
+ * 4. No other changes needed — PatientValidationServiceImpl and this interface remain unchanged.
  */
 public interface PatientValidationService {
 
     /**
-     * Verifies that a patient with the given ID exists and is active in the patient-service.
+     * Verifies that a patient with the given ID exists in patient-service.
      *
      * @param patientId the patient identifier to validate
-     * @throws com.lithoapp.analysis.exception.EpisodeNotFoundException or a dedicated
-     *         PatientNotFoundException when the patient cannot be found (future Feign impl)
+     * @throws com.lithoapp.analysis.exception.PatientNotFoundException if the patient does not exist
      */
     void validatePatientExists(Long patientId);
 }

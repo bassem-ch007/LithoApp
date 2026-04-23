@@ -21,5 +21,4 @@ public class PatientSummaryResponse {
     private LocalDate birthDate;
     private Gender gender;
     private String phone;
-    private Boolean active;
 }

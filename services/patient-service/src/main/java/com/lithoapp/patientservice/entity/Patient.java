@@ -58,10 +58,6 @@ public class Patient {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "active", nullable = false)
-    @Builder.Default
-    private Boolean active = true;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

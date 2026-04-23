@@ -1,13 +1,10 @@
 package com.lithoapp.analysis.exception;
 
 /**
- * Thrown when the referenced episode does not exist in the episode-service.
+ * Thrown when the referenced episode does not exist in episode-service.
  *
- * In the current phase this is raised by {@link com.lithoapp.analysis.service.validation.StubEpisodeValidationService}
- * only if the stub is configured to simulate a missing episode.
- *
- * When OpenFeign is activated, the real {@code FeignEpisodeValidationService}
- * will raise this exception on a 404 response from the episode-service.
+ * Raised by {@link com.lithoapp.analysis.service.validation.EpisodeValidationServiceImpl}
+ * on a 404 response from episode-service.
  *
  * HTTP mapping: 404 Not Found (see GlobalExceptionHandler).
  */

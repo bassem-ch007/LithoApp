@@ -22,13 +22,10 @@ package com.lithoapp.episodeservice.service;
 public interface PatientValidationService {
 
     /**
-     * Asserts that the patient identified by {@code patientId}:
-     * <ul>
-     *   <li>exists in patient-service (otherwise throws {@link com.lithoapp.episodeservice.exception.PatientNotFoundException})</li>
-     *   <li>is currently active (otherwise throws {@link com.lithoapp.episodeservice.exception.PatientInactiveException})</li>
-     * </ul>
+     * Asserts that the patient identified by {@code patientId} exists in patient-service.
      *
      * @param patientId the patient to validate
+     * @throws com.lithoapp.episodeservice.exception.PatientNotFoundException if the patient does not exist
      */
     void validatePatientExists(Long patientId);
 }
