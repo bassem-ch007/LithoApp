@@ -23,3 +23,5 @@ Thumbs.db
 .idea/
 infrastructure/docker/keycloak/realm/medical-platform-realm.json
 frontend/frontend.iml
+
+.claude/
