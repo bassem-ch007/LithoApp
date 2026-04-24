@@ -15,6 +15,8 @@ import com.lithoapp.analysis.mapper.AnalysisRequestMapper;
 import com.lithoapp.analysis.mapper.MetabolicMapper;
 import com.lithoapp.analysis.mapper.StoneResultMapper;
 import com.lithoapp.analysis.repository.*;
+import com.lithoapp.analysis.client.PatientServiceClient;
+import com.lithoapp.analysis.dto.client.PatientResponse;
 import com.lithoapp.analysis.service.validation.EpisodeValidationService;
 import com.lithoapp.analysis.service.validation.PatientValidationService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -42,6 +45,7 @@ public class AnalysisRequestService {
 
     private final PatientValidationService patientValidationService;
     private final EpisodeValidationService episodeValidationService;
+    private final PatientServiceClient patientServiceClient;
 
     // ── Create ────────────────────────────────────────────────────────────
 
@@ -50,14 +54,14 @@ public class AnalysisRequestService {
      *
      * Validation order (each step throws a typed exception on failure):
      * 1. Bean validation — patientId, episodeId, createdBy, type all present (@Valid on controller).
-     * 2. Patient exists — PatientValidationService (stub → future Feign).
-     * 3. Episode exists AND belongs to the patient — EpisodeValidationService (stub → future Feign).
+     * 2. Patient exists — PatientValidationService (Feign → patient-service).
+     * 3. Episode exists AND belongs to the patient — EpisodeValidationService (Feign → episode-service).
      * 4. Create AnalysisRequest + result stub + audit entry.
      */
     @Transactional
     public AnalysisRequestDto createRequest(CreateAnalysisRequestDto dto) {
 
-        // Step 2 — patient existence (future Feign guard)
+        // Step 2 — patient existence
         patientValidationService.validatePatientExists(dto.getPatientId());
 
         // Step 3 — episode existence + patient/episode consistency
@@ -128,6 +132,43 @@ public class AnalysisRequestService {
     public List<AnalysisRequestDto> listByStatus(AnalysisStatus status) {
         return requestRepository.findByStatus(status)
                 .stream().map(this::buildDetailDto).toList();
+    }
+
+    /**
+     * Biologist identity search — resolves patient identity fields
+     * (DI / DMI / name / phone) to patient IDs via patient-service, then
+     * returns all analysis requests belonging to those patients.
+     *
+     * <p>Any of the identity params may be blank; at least one should be
+     * provided by the caller (the controller enforces this). {@code status}
+     * is optional and filters the final result set when non-null.
+     *
+     * @return matching analysis requests, or an empty list when no patient
+     *         matches the identity criteria
+     */
+    @Transactional(readOnly = true)
+    public List<AnalysisRequestDto> searchByPatientIdentity(
+            String di, String dmi, String name, String phone, AnalysisStatus status) {
+
+        List<PatientResponse> patients = patientServiceClient.search(di, dmi, name, phone);
+        if (patients.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> patientIds = patients.stream()
+                .map(PatientResponse::getId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (patientIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<AnalysisRequest> requests = (status != null)
+                ? requestRepository.findByPatientIdInAndStatus(patientIds, status)
+                : requestRepository.findByPatientIdIn(patientIds);
+
+        return requests.stream().map(this::buildDetailDto).toList();
     }
 
     // ── Complete ──────────────────────────────────────────────────────────

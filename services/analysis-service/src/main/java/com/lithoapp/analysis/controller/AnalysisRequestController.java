@@ -22,11 +22,9 @@ import java.util.List;
  * Every analysis request is anchored to an episode. The primary read path
  * is GET /episode/{episodeId}. Patient-level reads span all episodes of a patient.
  *
- * Search by DI / DMI / name / phone is intentionally not implemented here.
- * That search requires resolving patient identifiers via the patient-service.
- * It will be added as a separate endpoint once Feign is integrated:
- *   GET /api/analysis-requests/search?di=&dmi=&name=&phone=
- * For now, callers search by patientId or episodeId directly.
+ * Biologist identity search resolves DI / DMI / name / phone through the
+ * patient-service Feign client and is exposed at:
+ *   GET /api/analysis-requests/search?di=&dmi=&name=&phone=&status=
  */
 @RestController
 @RequestMapping("/api/analysis-requests")
@@ -117,6 +115,39 @@ public class AnalysisRequestController {
         }
         // No filter provided — return empty list to avoid full-table scan
         return ResponseEntity.ok(List.of());
+    }
+
+    /**
+     * Biologist identity search — resolves DI / DMI / name / phone via
+     * patient-service (Feign) and returns matching analysis requests.
+     *
+     * At least one of {@code di}, {@code dmi}, {@code name}, {@code phone}
+     * must be provided; otherwise 400 is returned.
+     *
+     * Examples:
+     *   GET /api/analysis-requests/search?di=DI123
+     *   GET /api/analysis-requests/search?dmi=DMI123
+     *   GET /api/analysis-requests/search?name=Ali
+     *   GET /api/analysis-requests/search?phone=22111222
+     *   GET /api/analysis-requests/search?di=DI123&status=CREATED
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<AnalysisRequestDto>> searchByPatientIdentity(
+            @RequestParam(required = false) String di,
+            @RequestParam(required = false) String dmi,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) AnalysisStatus status) {
+
+        if (isBlank(di) && isBlank(dmi) && isBlank(name) && isBlank(phone)) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(
+                analysisRequestService.searchByPatientIdentity(di, dmi, name, phone, status));
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     // ── Complete ──────────────────────────────────────────────────────────

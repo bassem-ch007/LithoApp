@@ -1,0 +1,15 @@
+{
+  "id": "e1f2a3b4-5555-4666-8777-900000000002",
+  "name": "LithoApp — Local",
+  "values": [
+    { "key": "patientServiceUrl",  "value": "http://localhost:8086", "enabled": true },
+    { "key": "episodeServiceUrl",  "value": "http://localhost:8085", "enabled": true },
+    { "key": "analysisServiceUrl", "value": "http://localhost:8082", "enabled": true },
+    { "key": "patientId",          "value": "", "enabled": true },
+    { "key": "patientDi",          "value": "", "enabled": true },
+    { "key": "patientDmi",         "value": "", "enabled": true },
+    { "key": "episodeId",          "value": "", "enabled": true },
+    { "key": "analysisRequestId",  "value": "", "enabled": true }
+  ],
+  "_postman_variable_scope": "environment"
+}

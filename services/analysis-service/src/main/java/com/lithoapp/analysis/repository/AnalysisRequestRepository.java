@@ -32,8 +32,14 @@ public interface AnalysisRequestRepository extends JpaRepository<AnalysisRequest
 
     List<AnalysisRequest> findByStatus(AnalysisStatus status);
 
-    // ── Future extension hook ─────────────────────────────────────────────
-    // When the patient-service Feign client is available, a SearchFacadeService
-    // will resolve DI / DMI / name / phone → patientId externally, then call
-    // findByPatientIdIn(List<Long>). No changes required to this repository.
+    // ── Identity search (Feign-resolved patient IDs) ──────────────────────
+
+    /**
+     * Used by the biologist-facing identity search: patient-service resolves
+     * DI / DMI / name / phone to a set of patient IDs, then we fetch all
+     * analysis requests belonging to those patients.
+     */
+    List<AnalysisRequest> findByPatientIdIn(List<Long> patientIds);
+
+    List<AnalysisRequest> findByPatientIdInAndStatus(List<Long> patientIds, AnalysisStatus status);
 }
