@@ -49,9 +49,17 @@ public final class PatientSpecification {
             }
 
             if (hasText(phone)) {
-                predicates.add(cb.like(
+                Expression<String> normalizedPhone = cb.function(
+                        "replace",
+                        String.class,
                         root.get("phone"),
-                        contains(phone)
+                        cb.literal(" "),
+                        cb.literal("")
+                );
+
+                predicates.add(cb.equal(
+                        normalizedPhone,
+                        phone.replace(" ", "")
                 ));
             }
 

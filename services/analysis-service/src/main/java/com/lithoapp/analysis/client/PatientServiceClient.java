@@ -2,6 +2,7 @@ package com.lithoapp.analysis.client;
 
 import com.lithoapp.analysis.dto.client.PatientResponse;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,4 +27,15 @@ public interface PatientServiceClient {
      *         if patient-service cannot be reached or returns an unexpected error
      */
     Optional<PatientResponse> findById(Long patientId);
+
+    /**
+     * Identity-based patient search — resolves DI / DMI / name / phone into
+     * matching patient records. All params are optional (partial match on the
+     * remote side); at least one should be provided by the caller.
+     *
+     * @return matching patients; empty list if none found
+     * @throws com.lithoapp.analysis.exception.PatientServiceUnavailableException
+     *         if patient-service cannot be reached or returns an unexpected error
+     */
+    List<PatientResponse> search(String di, String dmi, String name, String phone);
 }
