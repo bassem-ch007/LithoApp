@@ -9,7 +9,8 @@
       "Bash(find \"C:\\\\Users\\\\Ce PC\\\\Desktop\\\\lithoApp\\\\services\\\\drainage-service\\\\src\\\\main\\\\java\" -type f -name \"*.java\" -exec grep -l \"PatientValidationService\\\\|EpisodeValidationService\" {} \\\\;)",
       "Bash(mvn -q -DskipTests compile)",
       "Bash(mvn -DskipTests compile)",
-      "Bash(mvn -DskipTests clean compile)"
+      "Bash(mvn -DskipTests clean compile)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/Ce PC/Desktop/lithoApp/postman/LithoApp.postman_collection.json','utf8'\\)\\); JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/Ce PC/Desktop/lithoApp/postman/LithoApp.local.postman_environment.json','utf8'\\)\\); console.log\\('OK'\\);\")"
     ]
   }
 }
