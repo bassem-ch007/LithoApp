@@ -7,6 +7,8 @@ import com.lithoapp.patientservice.dto.response.PatientSummaryResponse;
 import com.lithoapp.patientservice.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,11 @@ public class PatientController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new patient with full clinical profile")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Patient created"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "409", description = "DI or DMI already exists")
+    })
     public ResponseEntity<PatientResponse> createPatient(
             @Valid @RequestBody CreatePatientRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -40,19 +47,34 @@ public class PatientController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Retrieve a patient by internal ID")
-    public ResponseEntity<PatientResponse> getById(@PathVariable Long id) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "404", description = "Patient not found")
+    })
+    public ResponseEntity<PatientResponse> getById(
+            @Parameter(description = "Patient ID") @PathVariable Long id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
     @GetMapping("/by-di/{di}")
     @Operation(summary = "Retrieve a patient by DI (Dossier d'Identité)")
-    public ResponseEntity<PatientResponse> getByDi(@PathVariable String di) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "404", description = "Patient not found")
+    })
+    public ResponseEntity<PatientResponse> getByDi(
+            @Parameter(description = "Dossier d'Identité") @PathVariable String di) {
         return ResponseEntity.ok(patientService.getPatientByDi(di));
     }
 
     @GetMapping("/by-dmi/{dmi}")
     @Operation(summary = "Retrieve a patient by DMI (Dossier Médical Informatisé)")
-    public ResponseEntity<PatientResponse> getByDmi(@PathVariable String dmi) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "404", description = "Patient not found")
+    })
+    public ResponseEntity<PatientResponse> getByDmi(
+            @Parameter(description = "Dossier Médical Informatisé") @PathVariable String dmi) {
         return ResponseEntity.ok(patientService.getPatientByDmi(dmi));
     }
 
@@ -60,6 +82,7 @@ public class PatientController {
 
     @GetMapping("/search")
     @Operation(summary = "Search patients — filter by di, dmi, name (first+last) or phone")
+    @ApiResponse(responseCode = "200", description = "Paginated list of matching patients")
     public ResponseEntity<Page<PatientSummaryResponse>> search(
             @Parameter(description = "Filter by DI (partial match)")
             @RequestParam(required = false) String di,
@@ -77,8 +100,14 @@ public class PatientController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a patient's data")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patient updated"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "Patient not found"),
+            @ApiResponse(responseCode = "409", description = "DI or DMI conflict with another patient")
+    })
     public ResponseEntity<PatientResponse> update(
-            @PathVariable Long id,
+            @Parameter(description = "Patient ID") @PathVariable Long id,
             @Valid @RequestBody UpdatePatientRequest request) {
         return ResponseEntity.ok(patientService.updatePatient(id, request));
     }
@@ -87,7 +116,13 @@ public class PatientController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a patient — only allowed when no linked episodes exist")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Patient deleted"),
+            @ApiResponse(responseCode = "404", description = "Patient not found"),
+            @ApiResponse(responseCode = "409", description = "Patient has linked episodes and cannot be deleted")
+    })
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "Patient ID") @PathVariable Long id) {
         patientService.deletePatient(id);
         return ResponseEntity.noContent().build();
     }

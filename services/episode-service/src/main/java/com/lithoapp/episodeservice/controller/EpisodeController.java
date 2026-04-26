@@ -8,6 +8,8 @@ import com.lithoapp.episodeservice.enums.EpisodeStatus;
 import com.lithoapp.episodeservice.service.EpisodeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,11 @@ public class EpisodeController {
     private final EpisodeService episodeService;
 
     @Operation(summary = "Open a new clinical episode (case folder) for a patient")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Episode created"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "404", description = "Patient not found")
+    })
     @PostMapping
     public ResponseEntity<EpisodeResponse> createEpisode(
             @Valid @RequestBody CreateEpisodeRequest request) {
@@ -36,6 +43,10 @@ public class EpisodeController {
     }
 
     @Operation(summary = "Get full episode details by ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Episode returned"),
+            @ApiResponse(responseCode = "404", description = "Episode not found")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<EpisodeResponse> getEpisodeById(
             @Parameter(description = "Episode ID") @PathVariable Long id) {
@@ -45,6 +56,7 @@ public class EpisodeController {
     @Operation(summary = "Check whether a patient has any linked episodes",
                description = "Returns true if at least one episode exists for the patient. " +
                              "Used by patient-service to guard patient deletion.")
+    @ApiResponse(responseCode = "200", description = "Boolean flag returned")
     @GetMapping("/patient/{patientId}/exists")
     public ResponseEntity<Boolean> hasEpisodes(
             @Parameter(description = "Patient ID") @PathVariable Long patientId) {
@@ -56,6 +68,7 @@ public class EpisodeController {
             description = "Returns a paginated timeline of all case folders for a given patient. " +
                     "Use the optional 'status' query parameter to filter by ACTIVE or CLOSED episodes."
     )
+    @ApiResponse(responseCode = "200", description = "Paginated episode timeline (may be empty)")
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<Page<EpisodeSummaryResponse>> getEpisodesByPatient(
             @Parameter(description = "Patient ID") @PathVariable Long patientId,
@@ -71,6 +84,11 @@ public class EpisodeController {
                     "Updatable fields: title, notes, recurrence, status. " +
                     "patientId and openedAt are immutable."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Episode updated"),
+            @ApiResponse(responseCode = "400", description = "Validation error or illegal status transition"),
+            @ApiResponse(responseCode = "404", description = "Episode not found")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<EpisodeResponse> updateEpisode(
             @Parameter(description = "Episode ID") @PathVariable Long id,
