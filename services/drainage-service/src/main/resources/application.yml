@@ -5,6 +5,12 @@ spring:
   application:
     name: drainage-service
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/medical-platform/protocol/openid-connect/certs}
+
   datasource:
     url: jdbc:postgresql://localhost:5434/drainage_db
     username: postgres

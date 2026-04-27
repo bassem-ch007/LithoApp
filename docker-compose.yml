@@ -147,12 +147,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
       # JVM flags — JAVA_TOOL_OPTIONS is read natively by the JVM.
       # JAVA_OPTS would be silently ignored with exec-form ENTRYPOINT.
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
     depends_on:
       patient-db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - litho-network
     restart: unless-stopped
@@ -177,11 +180,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       # Inter-service: call patient-service by container name
       PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
     depends_on:
       episode-db:
         condition: service_healthy
       patient-service:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - litho-network
     restart: unless-stopped
@@ -213,6 +219,7 @@ services:
       # Inter-service
       PATIENT_SERVICE_BASE_URL: http://patient-service:8086
       EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
     depends_on:
       bilan-db:
         condition: service_healthy
@@ -222,6 +229,8 @@ services:
         condition: service_healthy
       episode-service:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - litho-network
     restart: unless-stopped
@@ -247,6 +256,7 @@ services:
       # Inter-service
       PATIENT_SERVICE_BASE_URL: http://patient-service:8086
       EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
     depends_on:
       drainage-db:
         condition: service_healthy
@@ -254,6 +264,8 @@ services:
         condition: service_healthy
       episode-service:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - litho-network
     restart: unless-stopped
