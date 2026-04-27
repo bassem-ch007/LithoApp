@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lithoapp-common-config
+  namespace: lithoapp
+data:
+  JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+
+  PATIENT_SERVICE_BASE_URL: "http://patient-service:8086"
+  EPISODE_SERVICE_BASE_URL: "http://episode-service:8085"
+  PATIENT_SERVICE_URI: "http://patient-service:8086"
+  EPISODE_SERVICE_URI: "http://episode-service:8085"
+  ANALYSIS_SERVICE_URI: "http://analysis-service:8082"
+  DRAINAGE_SERVICE_URI: "http://drainage-service:8084"
+
+  PATIENT_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/patient_db"
+  EPISODE_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/episode_db"
+  ANALYSIS_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/analysis_db"
+  DRAINAGE_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/drainage_db"
+
+  KEYCLOAK_INTERNAL_URL: "http://keycloak:8080"
+  KEYCLOAK_ISSUER_URI: "http://localhost:8080/realms/medical-platform"
+  KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs"
+
+  STORAGE_TYPE: "minio"
+  STORAGE_MINIO_ENDPOINT: "http://minio:9000"
+  STORAGE_MINIO_BUCKET: "analysis-pdfs"
+  STORAGE_LOCAL_BASE_PATH: "/app/uploads"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: lithoapp
+data:
+  01-create-databases.sh: |
+    #!/bin/sh
+    set -eu
+
+    create_database() {
+      db="$1"
+      if ! psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${db}'" | grep -q 1; then
+        createdb --username "$POSTGRES_USER" "$db"
+      fi
+    }
+
+    create_database patient_db
+    create_database episode_db
+    create_database analysis_db
+    create_database drainage_db
+    create_database keycloak_db

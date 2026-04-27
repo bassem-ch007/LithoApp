@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - headlamp/
+  - namespace.yaml
+  - configmaps/common-configmap.yaml
+  - secrets/postgres-secret.yaml
+  - secrets/keycloak-secret.yaml
+  - secrets/minio-secret.yaml
+  - minio/minio-pvc.yaml
+  - postgres/postgres-pvc.yaml
+  - postgres/postgres-deployment.yaml
+  - postgres/postgres-service.yaml
+  - keycloak/keycloak-configmap.yaml
+  - keycloak/keycloak-deployment.yaml
+  - keycloak/keycloak-service.yaml
+  - minio/minio-deployment.yaml
+  - minio/minio-service.yaml
+  - patient-service/deployment.yaml
+  - patient-service/service.yaml
+  - episode-service/deployment.yaml
+  - episode-service/service.yaml
+  - analysis-service/deployment.yaml
+  - analysis-service/service.yaml
+  - drainage-service/deployment.yaml
+  - drainage-service/service.yaml
+  - api-gateway/deployment.yaml
+  - api-gateway/service.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+
+configMapGenerator:
+  - name: keycloak-realm-template
+    namespace: lithoapp
+    files:
+      - medical-platform-realm.json.tpl=keycloak/medical-platform-realm.json.tpl
+generatorOptions:
+  disableNameSuffixHash: true

@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: lithoapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+        - name: render-keycloak-realm
+          image: node:22-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - node
+            - /realm-renderer/render-realm.js
+          env:
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_PORT
+            - name: SMTP_STARTTLS
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_STARTTLS
+            - name: SMTP_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_SSL
+            - name: SMTP_AUTH
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_AUTH
+            - name: SMTP_DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: SMTP_DEBUG
+            - name: FRONTEND_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: FRONTEND_BASE_URL
+            - name: FRONTEND_REDIRECT_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: FRONTEND_REDIRECT_URI
+            - name: FRONTEND_POST_LOGOUT_REDIRECT_URIS
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: FRONTEND_POST_LOGOUT_REDIRECT_URIS
+            - name: FRONTEND_WEB_ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: FRONTEND_WEB_ORIGIN
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: SMTP_USERNAME
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: SMTP_PASSWORD
+            - name: SMTP_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: SMTP_FROM
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: GOOGLE_CLIENT_SECRET
+          volumeMounts:
+            - name: keycloak-realm-template
+              mountPath: /realm-template
+              readOnly: true
+            - name: keycloak-realm-renderer
+              mountPath: /realm-renderer
+              readOnly: true
+            - name: keycloak-realm-rendered
+              mountPath: /realm-rendered
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.5.6
+          imagePullPolicy: IfNotPresent
+          args:
+            - start-dev
+            - --import-realm
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://postgres:5432/keycloak_db
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: admin-username
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: admin-password
+            - name: KC_HTTP_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: KC_HTTP_ENABLED
+            - name: KC_HOSTNAME_STRICT
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-config
+                  key: KC_HOSTNAME_STRICT
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: keycloak-realm-rendered
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+      volumes:
+        - name: keycloak-realm-template
+          configMap:
+            name: keycloak-realm-template
+        - name: keycloak-realm-renderer
+          configMap:
+            name: keycloak-config
+            items:
+              - key: render-realm.js
+                path: render-realm.js
+        - name: keycloak-realm-rendered
+          emptyDir: {}
