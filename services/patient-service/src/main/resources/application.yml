@@ -7,6 +7,12 @@ spring:
   application:
     name: patient-service
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/medical-platform/protocol/openid-connect/certs}
+
   datasource:
     url: jdbc:postgresql://localhost:5436/lithoapp_patients
     username: postgres
