@@ -23,5 +23,6 @@ Thumbs.db
 .idea/
 shared/docker/keycloak/realm/medical-platform-realm.json
 shared/k8s/base/secrets
+shared/postman
 frontend/frontend.iml
 .claude/
