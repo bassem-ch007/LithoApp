@@ -156,7 +156,7 @@ services:
   patient-service:
     build:
       context: ../..
-      dockerfile: shared/docker/Dockerfile.patdient-service
+      dockerfile: shared/docker/Dockerfile.patient-service
     image: lithoapp/patient-service:local
     container_name: litho-patient-service
     environment:
