@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,9 +37,12 @@ public class AuditController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Audit log returned (may be empty)"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Analysis request not found")
     })
     @GetMapping
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<List<AuditEntryDto>> getAuditLog(
             @Parameter(description = "Analysis request ID") @PathVariable Long id) {
         return ResponseEntity.ok(auditService.getAuditLog(id));

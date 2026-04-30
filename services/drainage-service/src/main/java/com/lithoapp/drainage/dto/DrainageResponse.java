@@ -21,7 +21,7 @@ public class DrainageResponse {
     private Long episodeId;
 
     private Long patientId;
-    private Long doctorId;
+    private String doctorUsername;
 
     private DrainageType drainageType;
     private DrainageSide side;

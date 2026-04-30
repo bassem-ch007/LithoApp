@@ -63,11 +63,18 @@ public class Drainage {
     private Long patientId;
 
     /**
-     * Treating doctor reference.
-     * Cross-service reference — no FK constraint.
+     * Treating doctor reference — nullable as of RBAC migration.
+     *
+     * doctorId is kept for backward compatibility with existing rows but is always
+     * set to null on new drainages: the JWT subject is a UUID String, incompatible
+     * with the Long column type. Use doctorUsername for the authenticated actor.
      */
-    @Column(name = "doctor_id", nullable = false)
+    @Column(name = "doctor_id")
     private Long doctorId;
+
+    /** Keycloak preferred_username of the urologist who created this drainage. */
+    @Column(name = "doctor_username")
+    private String doctorUsername;
 
     // ── Clinical fields ──────────────────────────────────────────────────────
 

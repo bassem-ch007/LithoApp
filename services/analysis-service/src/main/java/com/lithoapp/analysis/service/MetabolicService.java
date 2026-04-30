@@ -15,6 +15,7 @@ import com.lithoapp.analysis.mapper.MetabolicMapper;
 import com.lithoapp.analysis.port.FileStoragePort;
 import com.lithoapp.analysis.repository.MetabolicResultRepository;
 import com.lithoapp.analysis.repository.PdfDocumentRepository;
+import com.lithoapp.analysis.service.validation.PdfUploadValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class MetabolicService {
     private final FileStoragePort fileStoragePort;
     private final AuditService auditService;
     private final MetabolicMapper metabolicMapper;
+    private final PdfUploadValidator pdfUploadValidator;
 
     // ── Upload (versioned) ────────────────────────────────────────────────
 
@@ -61,6 +63,8 @@ public class MetabolicService {
     @Transactional
     public PdfDocumentDto uploadDocument(Long requestId, MetabolicDocumentType documentType,
                                          MultipartFile file, String biologistId) {
+        pdfUploadValidator.validate(file);
+
         AnalysisRequest request = requestService.loadOrThrow(requestId);
         request.guardNotCompleted();
 

@@ -1,7 +1,6 @@
 package com.lithoapp.analysis.dto.request;
 
 import com.lithoapp.analysis.domain.enums.AnalysisType;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -17,13 +16,8 @@ public class CreateAnalysisRequestDto {
     @Positive(message = "episodeId must be a positive number")
     private Long episodeId;
 
-    /**
-     * Identifier of the urologist (or any actor) creating this request.
-     * Will be replaced by the authenticated principal once Keycloak is integrated.
-     */
-    @NotBlank(message = "createdBy is required")
-    private String createdBy;
-
     @NotNull(message = "type is required (METABOLIC or STONE)")
     private AnalysisType type;
+
+    // createdBy is intentionally absent — extracted from the JWT principal in the controller.
 }

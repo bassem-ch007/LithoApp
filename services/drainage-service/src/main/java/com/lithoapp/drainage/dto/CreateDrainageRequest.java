@@ -27,8 +27,18 @@ public class CreateDrainageRequest {
     @NotNull(message = "patientId is required")
     private Long patientId;
 
-    @NotNull(message = "doctorId is required")
-    private Long doctorId;
+    /**
+     * doctorId is intentionally removed from client input.
+     *
+     * TRANSITIONAL NOTE: The Drainage entity stores doctorId as Long, but the
+     * Keycloak JWT subject is a UUID string. These types are incompatible.
+     * For now, doctorId is set to null on new drainages (column made nullable).
+     * The treating doctor's identity is logged from the JWT preferred_username
+     * in DrainageServiceImpl but not yet persisted in a typed column.
+     *
+     * Future work: add a String doctorUsername column to Drainage, or change
+     * the doctorId column to VARCHAR and store the Keycloak subject UUID.
+     */
 
     @NotNull(message = "drainageType is required")
     private DrainageType drainageType;

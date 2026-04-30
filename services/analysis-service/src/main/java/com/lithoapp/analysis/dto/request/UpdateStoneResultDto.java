@@ -1,6 +1,5 @@
 package com.lithoapp.analysis.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -12,16 +11,12 @@ import lombok.Data;
  * without having to resend the entire document each time.
  *
  * To explicitly clear a field, send an empty string "".
+ *
+ * modifiedBy is intentionally absent — the actor is extracted from the JWT
+ * principal in the controller and passed explicitly to the service.
  */
 @Data
 public class UpdateStoneResultDto {
-
-    /**
-     * Biologist performing this update.
-     * Will be replaced by the authenticated principal once Keycloak is integrated.
-     */
-    @NotBlank(message = "modifiedBy is required")
-    private String modifiedBy;
 
     // ── Morphological fields (all optional / partial) ─────────────────────
     private String morphSize;

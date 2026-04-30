@@ -1,15 +1,15 @@
 package com.lithoapp.analysis.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+/**
+ * Request body for the complete-analysis-request endpoint.
+ *
+ * completedBy is intentionally absent — the actor is extracted from the JWT
+ * principal in the controller and passed explicitly to the service.
+ * This DTO is kept for future extensibility (e.g. completion notes).
+ */
 @Data
 public class CompleteAnalysisRequestDto {
-
-    /**
-     * Biologist (or actor) explicitly marking the request as COMPLETED.
-     * Will be replaced by the authenticated principal once Keycloak is integrated.
-     */
-    @NotBlank(message = "completedBy is required")
-    private String completedBy;
+    // No fields required from client at this time.
 }

@@ -11,6 +11,7 @@ import com.lithoapp.drainage.exception.InvalidDrainageStateException;
 import com.lithoapp.drainage.mapper.DrainageMapper;
 import com.lithoapp.drainage.repository.DrainageRepository;
 import com.lithoapp.drainage.repository.DrainageSpecification;
+import com.lithoapp.drainage.security.CurrentUserProvider;
 import com.lithoapp.drainage.service.PatientValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,8 @@ public class DrainageServiceImpl implements DrainageService {
      * Replace the stub with a @Primary Feign-backed implementation when ready.
      */
     private final PatientValidationService patientValidationService;
+
+    private final CurrentUserProvider currentUserProvider;
 
     // ── Create ────────────────────────────────────────────────────────────────
 
@@ -66,11 +69,18 @@ public class DrainageServiceImpl implements DrainageService {
         checkNoDuplicateActiveDrainage(request);
 
         Drainage drainage = drainageMapper.toEntity(request);
+
+        // doctorId (Long) is incompatible with the JWT subject UUID — always null.
+        drainage.setDoctorId(null);
+        // Persist the authenticated urologist's username from the JWT principal.
+        String actor = currentUserProvider.getUsername();
+        drainage.setDoctorUsername(actor);
+
         Drainage saved = drainageRepository.save(drainage);
 
-        log.info("Created drainage [id={}, episode={}, patient={}, type={}, side={}, plannedRemoval={}]",
+        log.info("Created drainage [id={}, episode={}, patient={}, type={}, side={}, plannedRemoval={}, createdBy={}]",
                 saved.getId(), saved.getEpisodeId(), saved.getPatientId(),
-                saved.getDrainageType(), saved.getSide(), saved.getPlannedRemovalDate());
+                saved.getDrainageType(), saved.getSide(), saved.getPlannedRemovalDate(), actor);
 
         return drainageMapper.toResponse(saved);
     }

@@ -21,7 +21,6 @@ export class AuthService {
 
     this.userRoles = ((keycloak.tokenParsed as any)?.realm_access?.roles ?? []);
     this.initialized = true;
-    console.log(keycloak.tokenParsed as any);
     return authenticated;
   }
 

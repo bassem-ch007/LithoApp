@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,14 +33,18 @@ public class DrainageController {
     @Operation(
             summary = "Create a new drainage",
             description = "Creates a drainage device placement. The episodeId is required in the body; " +
-                    "the episode must exist and belong to the referenced patient."
+                    "the episode must exist and belong to the referenced patient. " +
+                    "The treating doctor identity is resolved from the authenticated JWT principal."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Drainage created"),
             @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Episode or patient not found")
     })
     @PostMapping
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<DrainageResponse> create(
             @Valid @RequestBody CreateDrainageRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -51,9 +56,12 @@ public class DrainageController {
     @Operation(summary = "Get a drainage by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Drainage returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Drainage not found")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'ADMIN')")
     public ResponseEntity<DrainageResponse> getById(
             @Parameter(description = "Drainage UUID") @PathVariable UUID id) {
         return ResponseEntity.ok(drainageService.getDrainageById(id));
@@ -67,6 +75,7 @@ public class DrainageController {
     )
     @ApiResponse(responseCode = "200", description = "List returned (may be empty)")
     @GetMapping("/episode/{episodeId}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'ADMIN')")
     public ResponseEntity<List<DrainageResponse>> getByEpisode(
             @Parameter(description = "Episode ID") @PathVariable Long episodeId) {
         return ResponseEntity.ok(drainageService.getDrainagesByEpisodeId(episodeId));
@@ -80,6 +89,7 @@ public class DrainageController {
     )
     @ApiResponse(responseCode = "200", description = "List returned (may be empty)")
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'ADMIN')")
     public ResponseEntity<List<DrainageResponse>> getByPatient(
             @Parameter(description = "Patient ID") @PathVariable Long patientId) {
         return ResponseEntity.ok(drainageService.getDrainagesByPatientId(patientId));
@@ -93,6 +103,7 @@ public class DrainageController {
     )
     @ApiResponse(responseCode = "200", description = "Filtered list returned")
     @GetMapping
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'ADMIN')")
     public ResponseEntity<List<DrainageResponse>> getAll(
             @Parameter(description = "Filter by episode ID")
             @RequestParam(required = false) Long episodeId,
@@ -124,9 +135,12 @@ public class DrainageController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Drainage updated"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Drainage not found")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<DrainageResponse> update(
             @Parameter(description = "Drainage UUID") @PathVariable UUID id,
             @RequestBody UpdateDrainageRequest request) {
@@ -143,9 +157,12 @@ public class DrainageController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Drainage marked as removed"),
             @ApiResponse(responseCode = "400", description = "Drainage already removed or invalid removal data"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Drainage not found")
     })
     @PatchMapping("/{id}/remove")
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<DrainageResponse> remove(
             @Parameter(description = "Drainage UUID") @PathVariable UUID id,
             @Valid @RequestBody RemoveDrainageRequest request) {

@@ -3,7 +3,6 @@ package com.lithoapp.analysis.service;
 import com.lithoapp.analysis.domain.enums.AnalysisStatus;
 import com.lithoapp.analysis.domain.enums.AnalysisType;
 import com.lithoapp.analysis.domain.enums.AuditActionType;
-import com.lithoapp.analysis.dto.request.CompleteAnalysisRequestDto;
 import com.lithoapp.analysis.dto.request.CreateAnalysisRequestDto;
 import com.lithoapp.analysis.dto.response.AnalysisRequestDto;
 import com.lithoapp.analysis.entity.AnalysisRequest;
@@ -53,13 +52,13 @@ public class AnalysisRequestService {
      * Creates a new analysis request anchored to the given episode.
      *
      * Validation order (each step throws a typed exception on failure):
-     * 1. Bean validation — patientId, episodeId, createdBy, type all present (@Valid on controller).
+     * 1. Bean validation — patientId, episodeId, type all present (@Valid on controller).
      * 2. Patient exists — PatientValidationService (Feign → patient-service).
      * 3. Episode exists AND belongs to the patient — EpisodeValidationService (Feign → episode-service).
      * 4. Create AnalysisRequest + result stub + audit entry.
      */
     @Transactional
-    public AnalysisRequestDto createRequest(CreateAnalysisRequestDto dto) {
+    public AnalysisRequestDto createRequest(CreateAnalysisRequestDto dto, String actor) {
 
         // Step 2 — patient existence
         patientValidationService.validatePatientExists(dto.getPatientId());
@@ -69,7 +68,7 @@ public class AnalysisRequestService {
                 dto.getEpisodeId(), dto.getPatientId());
 
         AnalysisRequest request = AnalysisRequest.create(
-                dto.getPatientId(), dto.getEpisodeId(), dto.getCreatedBy(), dto.getType());
+                dto.getPatientId(), dto.getEpisodeId(), actor, dto.getType());
         requestRepository.save(request);
 
         if (request.getType() == AnalysisType.METABOLIC) {
@@ -78,12 +77,12 @@ public class AnalysisRequestService {
             stoneResultRepository.save(StoneResult.forRequest(request.getId()));
         }
 
-        auditService.record(request.getId(), dto.getCreatedBy(),
+        auditService.record(request.getId(), actor,
                 AuditActionType.REQUEST_CREATED, null, null, request.getType().name());
 
-        log.info("Created {} analysis request id={} for episode={} patient={}",
+        log.info("Created {} analysis request id={} for episode={} patient={} by={}",
                 request.getType(), request.getId(),
-                request.getEpisodeId(), request.getPatientId());
+                request.getEpisodeId(), request.getPatientId(), actor);
 
         return buildDetailDto(request);
     }
@@ -189,7 +188,7 @@ public class AnalysisRequestService {
      * field update must have occurred first (auto-transitioning to IN_PROGRESS).
      */
     @Transactional
-    public AnalysisRequestDto completeRequest(Long id, CompleteAnalysisRequestDto dto) {
+    public AnalysisRequestDto completeRequest(Long id, String actor) {
         AnalysisRequest request = loadOrThrow(id);
         request.guardNotCompleted();
 
@@ -208,16 +207,16 @@ public class AnalysisRequestService {
         AnalysisStatus previousStatus = request.getStatus();
         request.transitionTo(AnalysisStatus.COMPLETED);
         request.setCompletedAt(LocalDateTime.now());
-        request.setCompletedBy(dto.getCompletedBy());
+        request.setCompletedBy(actor);
         requestRepository.save(request);
 
-        auditService.record(id, dto.getCompletedBy(),
+        auditService.record(id, actor,
                 AuditActionType.STATUS_CHANGED, "status",
                 previousStatus.name(), AnalysisStatus.COMPLETED.name());
-        auditService.record(id, dto.getCompletedBy(),
-                AuditActionType.REQUEST_COMPLETED, null, null, dto.getCompletedBy());
+        auditService.record(id, actor,
+                AuditActionType.REQUEST_COMPLETED, null, null, actor);
 
-        log.info("Completed analysis request id={} by {}", id, dto.getCompletedBy());
+        log.info("Completed analysis request id={} by {}", id, actor);
         return buildDetailDto(request);
     }
 
