@@ -6,20 +6,26 @@
     </div>
 
     <nav class="nav">
-      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-
       @if (authService.isUrologue()) {
+        <a routerLink="/urologist/dashboard" routerLinkActive="active">Dashboard</a>
         <a routerLink="/patients" routerLinkActive="active">Patients</a>
+        <a routerLink="/episodes" routerLinkActive="active">Episodes</a>
+        <a routerLink="/analysis-requests" routerLinkActive="active">Analysis Requests</a>
+        <a routerLink="/drainage" routerLinkActive="active">Drainage / JJ</a>
       }
 
-      <a routerLink="/analyses" routerLinkActive="active">Analyses</a>
-
-      <a routerLink="/drainage" routerLinkActive="active">Drainage</a>
-
-      <a routerLink="/notifications" routerLinkActive="active">Notifications</a>
+      @if (authService.isBiologist()) {
+        <a routerLink="/biologist/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/analysis-search" routerLinkActive="active">Analysis Search</a>
+        <a routerLink="/analysis-results" routerLinkActive="active">Analysis Requests / Results</a>
+      }
 
       @if (authService.isAdmin()) {
-        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+        <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
+      }
+
+      @if (!authService.hasAppRole()) {
+        <a routerLink="/pending-approval" routerLinkActive="active">Pending Approval</a>
       }
     </nav>
   </aside>

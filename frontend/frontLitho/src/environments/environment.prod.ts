@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://your-gateway-domain.com',
+  apiBaseUrl: 'http://localhost:9090',
   keycloak: {
     url: 'https://your-keycloak-domain.com',
     realm: 'medical-platform',
