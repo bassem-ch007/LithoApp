@@ -1,8 +1,8 @@
-import { ActivatedRouteSnapshot, CanActivateFn, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
-export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -12,7 +12,13 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return true;
   }
 
-  const allowed = expectedRoles.some(role => authService.hasRole(role));
+  if (authService.hasAnyRole(expectedRoles)) {
+    return true;
+  }
 
-  return allowed ? true : router.parseUrl('/access-denied');
+  if (!authService.hasAppRole()) {
+    return router.parseUrl('/pending-approval');
+  }
+
+  return router.parseUrl('/access-denied');
 };
