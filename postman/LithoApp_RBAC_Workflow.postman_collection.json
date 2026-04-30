@@ -1,0 +1,4579 @@
+{
+  "info": {
+    "_postman_id": "3e0fa7f8-055b-4432-adb7-97fbb07326bf",
+    "name": "LithoApp RBAC Medical Workflow",
+    "description": "Postman collection generated from the LithoApp source code. It uses API Gateway at {{gatewayBaseUrl}}, OAuth2 Authorization Code + PKCE S256 via Keycloak, and role-specific Bearer token environment variables. No JWTs or passwords are hardcoded.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "grant_type",
+        "value": "authorization_code_with_pkce",
+        "type": "string"
+      },
+      {
+        "key": "authUrl",
+        "value": "{{authorizationUrl}}",
+        "type": "string"
+      },
+      {
+        "key": "accessTokenUrl",
+        "value": "{{tokenUrl}}",
+        "type": "string"
+      },
+      {
+        "key": "clientId",
+        "value": "{{clientId}}",
+        "type": "string"
+      },
+      {
+        "key": "redirect_uri",
+        "value": "{{redirectUri}}",
+        "type": "string"
+      },
+      {
+        "key": "scope",
+        "value": "{{scope}}",
+        "type": "string"
+      },
+      {
+        "key": "challengeAlgorithm",
+        "value": "S256",
+        "type": "string"
+      },
+      {
+        "key": "addTokenTo",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "00 - OAuth2 Setup Instructions",
+      "description": {
+        "content": "Use Postman Authorization Code with PKCE S256 against Keycloak. The frontend clientId is frontend-client. Configure Postman OAuth2 using authorizationUrl, tokenUrl, clientId, redirectUri, and scope from the environment. Log in separately as UROLOGUE, BIOLOGIST, and ADMIN, then save/copy each returned access token into urologueAccessToken, biologistAccessToken, and adminAccessToken. No static JWTs are included.",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "name": "Keycloak OpenID Configuration",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{keycloakBaseUrl}}/realms/{{realm}}/.well-known/openid-configuration",
+              "host": [
+                "{{keycloakBaseUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                ".well-known",
+                "openid-configuration"
+              ]
+            },
+            "description": {
+              "content": "Confirms the realm authorization and token endpoints before using Postman OAuth2.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Documentation - UROLOGUE OAuth2 login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{keycloakBaseUrl}}/realms/{{realm}}/.well-known/openid-configuration",
+              "host": [
+                "{{keycloakBaseUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                ".well-known",
+                "openid-configuration"
+              ]
+            },
+            "description": {
+              "content": "Open this folder Authorization tab, choose OAuth 2.0, Authorization Code, PKCE S256, clientId=frontend-client, callback={{redirectUri}}, scope={{scope}}. Log in with a Keycloak account that has realm role UROLOGUE, then put the returned access token in urologueAccessToken.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Documentation - BIOLOGIST OAuth2 login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{keycloakBaseUrl}}/realms/{{realm}}/.well-known/openid-configuration",
+              "host": [
+                "{{keycloakBaseUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                ".well-known",
+                "openid-configuration"
+              ]
+            },
+            "description": {
+              "content": "Repeat the OAuth2 login with an account that has realm role BIOLOGIST and save the returned access token in biologistAccessToken.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Documentation - ADMIN OAuth2 login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{keycloakBaseUrl}}/realms/{{realm}}/.well-known/openid-configuration",
+              "host": [
+                "{{keycloakBaseUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                ".well-known",
+                "openid-configuration"
+              ]
+            },
+            "description": {
+              "content": "Repeat the OAuth2 login with an account that has realm role ADMIN and save the returned access token in adminAccessToken.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "oauth2",
+        "oauth2": [
+          {
+            "key": "grant_type",
+            "value": "authorization_code_with_pkce",
+            "type": "string"
+          },
+          {
+            "key": "authUrl",
+            "value": "{{authorizationUrl}}",
+            "type": "string"
+          },
+          {
+            "key": "accessTokenUrl",
+            "value": "{{tokenUrl}}",
+            "type": "string"
+          },
+          {
+            "key": "clientId",
+            "value": "{{clientId}}",
+            "type": "string"
+          },
+          {
+            "key": "redirect_uri",
+            "value": "{{redirectUri}}",
+            "type": "string"
+          },
+          {
+            "key": "scope",
+            "value": "{{scope}}",
+            "type": "string"
+          },
+          {
+            "key": "challengeAlgorithm",
+            "value": "S256",
+            "type": "string"
+          },
+          {
+            "key": "addTokenTo",
+            "value": "header",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "01 - Health and Security Smoke Tests",
+      "item": [
+        {
+          "name": "Gateway health without token -> 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/actuator/health",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Gateway health is explicitly permitted without authentication.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected route without token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Any non-actuator protected route should reject missing Bearer JWT.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway Swagger without token -> 401 or 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/swagger-ui.html",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "swagger-ui.html"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "No gateway Swagger route was found. Spring Security authenticates unknown routes first in many setups, yielding 401; if routing handles it first, 404 is also acceptable.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401 or 404\", function () {",
+                  "  pm.expect([401, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway actuator metrics as ADMIN -> 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/actuator/metrics",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Gateway SecurityConfig restricts metrics to ADMIN.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway actuator metrics as UROLOGUE -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/actuator/metrics",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "UROLOGUE has a valid JWT but not ADMIN role.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Patient Workflow",
+      "item": [
+        {
+          "name": "Create patient as UROLOGUE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Requires UROLOGUE. DI and DMI are generated with {{$timestamp}} and saved from the response.",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"di\": \"DI-{{$timestamp}}\",\n  \"dmi\": \"DMI-{{$timestamp}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Workflow\",\n  \"birthDate\": \"1980-05-10\",\n  \"gender\": \"MALE\",\n  \"height\": 176.5,\n  \"weight\": 78.2,\n  \"address\": \"Local Postman test address\",\n  \"email\": \"postman.workflow@example.test\",\n  \"phone\": \"+1555010101\",\n  \"clinicalInfo\": {\n    \"familyHistory\": true,\n    \"personalHistory\": true,\n    \"lastEpisodeDate\": \"2025-01-15\",\n    \"lithiasisType\": \"Calcium oxalate suspected\",\n    \"frequentInfections\": false,\n    \"singleKidney\": false,\n    \"kidneyType\": \"ANATOMICAL\",\n    \"chronicRenalFailure\": false,\n    \"clearance\": 92.4\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Hydration and citrate therapy\"\n  },\n  \"associatedDiseases\": [\n    \"Hypertension\"\n  ],\n  \"geneticDiseases\": [],\n  \"anatomicalAnomalies\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"patientId\", json.id);",
+                  "if (json.di !== undefined && json.di !== null) pm.environment.set(\"patientDI\", json.di);",
+                  "if (json.dmi !== undefined && json.dmi !== null) pm.environment.set(\"patientDMI\", json.dmi);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read patient by ID as UROLOGUE",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get patient by DI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/by-di/{{patientDI}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "by-di",
+                "{{patientDI}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get patient by DMI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/by-dmi/{{patientDMI}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "by-dmi",
+                "{{patientDMI}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search patients by name/phone",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/search?name=Postman&phone=%2B155501",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Postman"
+                },
+                {
+                  "key": "phone",
+                  "value": "%2B155501"
+                }
+              ]
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update patient as UROLOGUE",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1555010199\",\n  \"weight\": 77.8,\n  \"clinicalInfo\": {\n    \"frequentInfections\": true,\n    \"clearance\": 88.1\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Updated Postman medication note\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create patient as BIOLOGIST -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"di\": \"DI-{{$timestamp}}\",\n  \"dmi\": \"DMI-{{$timestamp}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Workflow\",\n  \"birthDate\": \"1980-05-10\",\n  \"gender\": \"MALE\",\n  \"height\": 176.5,\n  \"weight\": 78.2,\n  \"address\": \"Local Postman test address\",\n  \"email\": \"postman.workflow@example.test\",\n  \"phone\": \"+1555010101\",\n  \"clinicalInfo\": {\n    \"familyHistory\": true,\n    \"personalHistory\": true,\n    \"lastEpisodeDate\": \"2025-01-15\",\n    \"lithiasisType\": \"Calcium oxalate suspected\",\n    \"frequentInfections\": false,\n    \"singleKidney\": false,\n    \"kidneyType\": \"ANATOMICAL\",\n    \"chronicRenalFailure\": false,\n    \"clearance\": 92.4\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Hydration and citrate therapy\"\n  },\n  \"associatedDiseases\": [\n    \"Hypertension\"\n  ],\n  \"geneticDiseases\": [],\n  \"anatomicalAnomalies\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create patient without token -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"di\": \"DI-{{$timestamp}}\",\n  \"dmi\": \"DMI-{{$timestamp}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Workflow\",\n  \"birthDate\": \"1980-05-10\",\n  \"gender\": \"MALE\",\n  \"height\": 176.5,\n  \"weight\": 78.2,\n  \"address\": \"Local Postman test address\",\n  \"email\": \"postman.workflow@example.test\",\n  \"phone\": \"+1555010101\",\n  \"clinicalInfo\": {\n    \"familyHistory\": true,\n    \"personalHistory\": true,\n    \"lastEpisodeDate\": \"2025-01-15\",\n    \"lithiasisType\": \"Calcium oxalate suspected\",\n    \"frequentInfections\": false,\n    \"singleKidney\": false,\n    \"kidneyType\": \"ANATOMICAL\",\n    \"chronicRenalFailure\": false,\n    \"clearance\": 92.4\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Hydration and citrate therapy\"\n  },\n  \"associatedDiseases\": [\n    \"Hypertension\"\n  ],\n  \"geneticDiseases\": [],\n  \"anatomicalAnomalies\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete patient as ADMIN if no linked episodes -> 204 or 409",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{deleteCandidatePatientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{deleteCandidatePatientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Delete exists and is ADMIN-only. Use deleteCandidatePatientId for a disposable patient; the main workflow patient will usually return 409 once episodes exist.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204 or 409 or 404\", function () {",
+                  "  pm.expect([204, 409, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - delete patient as UROLOGUE -> 403",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - delete patient as BIOLOGIST -> 403",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Episode Workflow",
+      "item": [
+        {
+          "name": "Create episode as UROLOGUE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"openedAt\": \"2026-04-29\",\n  \"title\": \"Postman stone episode\",\n  \"notes\": \"Created from RBAC workflow collection\",\n  \"recurrence\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"episodeId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read episode by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes/{{episodeId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes",
+                "{{episodeId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List episodes by patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes/patient/{{patientId}}?status=ACTIVE",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes",
+                "patient",
+                "{{patientId}}"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check patient has episodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes/patient/{{patientId}}/exists",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes",
+                "patient",
+                "{{patientId}}",
+                "exists"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update episode as UROLOGUE",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes/{{episodeId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes",
+                "{{episodeId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman stone episode - updated\",\n  \"notes\": \"Updated from RBAC workflow collection\",\n  \"recurrence\": true,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create episode as BIOLOGIST -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"openedAt\": \"2026-04-29\",\n  \"title\": \"Postman stone episode\",\n  \"notes\": \"Created from RBAC workflow collection\",\n  \"recurrence\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create episode without token -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"openedAt\": \"2026-04-29\",\n  \"title\": \"Postman stone episode\",\n  \"notes\": \"Created from RBAC workflow collection\",\n  \"recurrence\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Analysis Request Workflow",
+      "item": [
+        {
+          "name": "Create METABOLIC analysis request as UROLOGUE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"type\": \"METABOLIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"metabolicAnalysisId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create STONE analysis request as UROLOGUE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"type\": \"STONE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"stoneAnalysisId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read metabolic analysis request by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List analysis requests by episode",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/episode/{{episodeId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "episode",
+                "{{episodeId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List analysis requests by patient/status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests?patientId={{patientId}}&status=CREATED",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "{{patientId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "CREATED"
+                }
+              ]
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search analysis requests by DI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/search?di={{patientDI}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "di",
+                  "value": "{{patientDI}}"
+                }
+              ]
+            },
+            "description": {
+              "content": "BIOLOGIST can search analysis requests by patient identity through patient-service.",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search analysis requests by DMI/name/phone",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/search?dmi={{patientDMI}}&name=Postman&phone=%2B155501",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "dmi",
+                  "value": "{{patientDMI}}"
+                },
+                {
+                  "key": "name",
+                  "value": "Postman"
+                },
+                {
+                  "key": "phone",
+                  "value": "%2B155501"
+                }
+              ]
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create analysis request as BIOLOGIST -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"type\": \"METABOLIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - complete analysis as UROLOGUE -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - access analysis without token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": {
+        "content": "No explicit start-analysis endpoint was found. First PDF upload or stone result update automatically transitions CREATED to IN_PROGRESS.",
+        "type": "text/plain"
+      }
+    },
+    {
+      "name": "05 - Metabolic PDF Workflow",
+      "item": [
+        {
+          "name": "Upload valid BLOOD_TEST PDF as BIOLOGIST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "Multipart field name must be file. Select a real PDF in Postman if {{testPdfPath}} is not resolved.",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload valid MORNING_URINE PDF as BIOLOGIST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/MORNING_URINE",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "MORNING_URINE"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload valid H24_URINE PDF as BIOLOGIST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/H24_URINE",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "H24_URINE"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read metabolic result view",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download active BLOOD_TEST PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST/download",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST",
+                "download"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download BLOOD_TEST version 1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST/versions/1/download",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST",
+                "versions",
+                "1",
+                "download"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replace/upload another BLOOD_TEST version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete METABOLIC analysis after at least one active PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - upload PDF as UROLOGUE -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - upload fake PDF/wrong extension -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "If this is run after completion, the immutable-request guard may return 400 before file validation. For pure validation, run it before completion on a fresh metabolic request.",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testFakePdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400 or 403\", function () {",
+                  "  pm.expect([400, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - upload without token -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - upload after COMPLETED -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", function () {",
+                  "  pm.expect([400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": {
+        "content": "MetabolicDocumentType enum values found: BLOOD_TEST, MORNING_URINE, H24_URINE. Backend service allows METABOLIC completion after at least one active PDF, although one controller comment still says three.",
+        "type": "text/plain"
+      }
+    },
+    {
+      "name": "06 - Stone Analysis Workflow",
+      "item": [
+        {
+          "name": "Update stone result as BIOLOGIST",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "stone"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"morphSize\": \"7 mm\",\n  \"morphSurface\": \"rough\",\n  \"morphColor\": \"yellow-brown\",\n  \"morphSection\": \"laminated\",\n  \"morphOuterLayers\": \"calcium oxalate monohydrate\",\n  \"morphCore\": \"apatite traces\",\n  \"spectroSurface\": \"whewellite dominant\",\n  \"spectroSection\": \"mixed calcium oxalate\",\n  \"spectroOuterLayers\": \"COM\",\n  \"spectroCore\": \"carbonate apatite\",\n  \"finalStoneType\": \"Calcium oxalate monohydrate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read stone result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "stone"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete STONE analysis as BIOLOGIST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - update stone result as UROLOGUE -> 403",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "stone"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"morphSize\": \"7 mm\",\n  \"morphSurface\": \"rough\",\n  \"morphColor\": \"yellow-brown\",\n  \"morphSection\": \"laminated\",\n  \"morphOuterLayers\": \"calcium oxalate monohydrate\",\n  \"morphCore\": \"apatite traces\",\n  \"spectroSurface\": \"whewellite dominant\",\n  \"spectroSection\": \"mixed calcium oxalate\",\n  \"spectroOuterLayers\": \"COM\",\n  \"spectroCore\": \"carbonate apatite\",\n  \"finalStoneType\": \"Calcium oxalate monohydrate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - update stone result without token -> 401",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "stone"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"morphSize\": \"7 mm\",\n  \"morphSurface\": \"rough\",\n  \"morphColor\": \"yellow-brown\",\n  \"morphSection\": \"laminated\",\n  \"morphOuterLayers\": \"calcium oxalate monohydrate\",\n  \"morphCore\": \"apatite traces\",\n  \"spectroSurface\": \"whewellite dominant\",\n  \"spectroSection\": \"mixed calcium oxalate\",\n  \"spectroOuterLayers\": \"COM\",\n  \"spectroCore\": \"carbonate apatite\",\n  \"finalStoneType\": \"Calcium oxalate monohydrate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - update stone result after COMPLETED -> 400 or 403",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{stoneAnalysisId}}/stone",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{stoneAnalysisId}}",
+                "stone"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"finalStoneType\": \"Attempted mutation after completion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400 or 403\", function () {",
+                  "  pm.expect([400, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Drainage/JJ Workflow",
+      "item": [
+        {
+          "name": "Create drainage as UROLOGUE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2026-04-29\",\n  \"plannedRemovalDate\": \"2026-05-29\",\n  \"jjType\": \"STANDARD_6F\",\n  \"notes\": \"Postman JJ stent placement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"drainageId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read drainage by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List drainages by patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/patient/{{patientId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "patient",
+                "{{patientId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List drainages by episode",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/episode/{{episodeId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "episode",
+                "{{episodeId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Flexible drainage filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages?patientId={{patientId}}&episodeId={{episodeId}}&drainageType=JJ&status=ACTIVE&overdue=false",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "{{patientId}}"
+                },
+                {
+                  "key": "episodeId",
+                  "value": "{{episodeId}}"
+                },
+                {
+                  "key": "drainageType",
+                  "value": "JJ"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "overdue",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update drainage as UROLOGUE",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plannedRemovalDate\": \"2026-06-05\",\n  \"notes\": \"Updated planned removal date from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove drainage as UROLOGUE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}/remove",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}",
+                "remove"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"removedAt\": \"2026-05-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create drainage as BIOLOGIST -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2026-04-29\",\n  \"plannedRemovalDate\": \"2026-05-29\",\n  \"jjType\": \"STANDARD_6F\",\n  \"notes\": \"Postman JJ stent placement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - update drainage as BIOLOGIST -> 403",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plannedRemovalDate\": \"2026-06-05\",\n  \"notes\": \"Updated planned removal date from Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - remove drainage as BIOLOGIST -> 403",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}/remove",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}",
+                "remove"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"removedAt\": \"2026-05-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", function () {",
+                  "  pm.expect([403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - create drainage without token -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2026-04-29\",\n  \"plannedRemovalDate\": \"2026-05-29\",\n  \"jjType\": \"STANDARD_6F\",\n  \"notes\": \"Postman JJ stent placement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": {
+        "content": "Drainage enum values found: DrainageType JJ, URETERAL, NEPHROSTOMY; DrainageSide LEFT, RIGHT, BILATERAL; DrainageStatus ACTIVE, REMOVED; JJType STANDARD_6F, LARGE_7F, BIODEGRADABLE, METALLIC.",
+        "type": "text/plain"
+      }
+    },
+    {
+      "name": "08 - Audit Workflow",
+      "item": [
+        {
+          "name": "Read analysis audit log as BIOLOGIST",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/audit",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "audit"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read analysis audit log as UROLOGUE",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/audit",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "audit"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative - audit without token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/audit",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "audit"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", function () {",
+                  "  pm.expect([401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Complete End-to-End Scenario",
+      "item": [
+        {
+          "name": "E2E 01 - UROLOGUE creates patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/patients",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "patients"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"di\": \"DI-{{$timestamp}}\",\n  \"dmi\": \"DMI-{{$timestamp}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Workflow\",\n  \"birthDate\": \"1980-05-10\",\n  \"gender\": \"MALE\",\n  \"height\": 176.5,\n  \"weight\": 78.2,\n  \"address\": \"Local Postman test address\",\n  \"email\": \"postman.workflow@example.test\",\n  \"phone\": \"+1555010101\",\n  \"clinicalInfo\": {\n    \"familyHistory\": true,\n    \"personalHistory\": true,\n    \"lastEpisodeDate\": \"2025-01-15\",\n    \"lithiasisType\": \"Calcium oxalate suspected\",\n    \"frequentInfections\": false,\n    \"singleKidney\": false,\n    \"kidneyType\": \"ANATOMICAL\",\n    \"chronicRenalFailure\": false,\n    \"clearance\": 92.4\n  },\n  \"medication\": {\n    \"hasMedication\": true,\n    \"description\": \"Hydration and citrate therapy\"\n  },\n  \"associatedDiseases\": [\n    \"Hypertension\"\n  ],\n  \"geneticDiseases\": [],\n  \"anatomicalAnomalies\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"patientId\", json.id);",
+                  "if (json.di !== undefined && json.di !== null) pm.environment.set(\"patientDI\", json.di);",
+                  "if (json.dmi !== undefined && json.dmi !== null) pm.environment.set(\"patientDMI\", json.dmi);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 02 - UROLOGUE creates episode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/episodes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "episodes"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"openedAt\": \"2026-04-29\",\n  \"title\": \"Postman stone episode\",\n  \"notes\": \"Created from RBAC workflow collection\",\n  \"recurrence\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"episodeId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 03 - UROLOGUE creates METABOLIC analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"type\": \"METABOLIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"metabolicAnalysisId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 04 - BIOLOGIST uploads valid BLOOD_TEST PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 05 - BIOLOGIST completes METABOLIC analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "complete"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 06 - BIOLOGIST upload again after completion -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{biologistAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/analysis-requests/{{metabolicAnalysisId}}/metabolic/documents/BLOOD_TEST",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analysis-requests",
+                "{{metabolicAnalysisId}}",
+                "metabolic",
+                "documents",
+                "BLOOD_TEST"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{testPdfPath}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", function () {",
+                  "  pm.expect([400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 07 - UROLOGUE creates drainage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"episodeId\": \"{{episodeId}}\",\n  \"drainageType\": \"JJ\",\n  \"side\": \"LEFT\",\n  \"placedAt\": \"2026-04-29\",\n  \"plannedRemovalDate\": \"2026-05-29\",\n  \"jjType\": \"STANDARD_6F\",\n  \"notes\": \"Postman JJ stent placement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", function () {",
+                  "  pm.expect([201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.id !== undefined && json.id !== null) pm.environment.set(\"drainageId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2E 08 - UROLOGUE removes drainage",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{urologueAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/drainages/{{drainageId}}/remove",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drainages",
+                "{{drainageId}}",
+                "remove"
+              ],
+              "query": []
+            },
+            "description": {
+              "content": "",
+              "type": "text/plain"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"removedAt\": \"2026-05-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () {",
+                  "  pm.expect([200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set(\"today\", new Date().toISOString().slice(0, 10));"
+        ]
+      }
+    }
+  ]
+}

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,10 +32,13 @@ public class PatientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('UROLOGUE')")
     @Operation(summary = "Create a new patient with full clinical profile")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Patient created"),
             @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "409", description = "DI or DMI already exists")
     })
     public ResponseEntity<PatientResponse> createPatient(
@@ -46,9 +50,12 @@ public class PatientController {
     // ── Read ──────────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     @Operation(summary = "Retrieve a patient by internal ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Patient not found")
     })
     public ResponseEntity<PatientResponse> getById(
@@ -57,9 +64,12 @@ public class PatientController {
     }
 
     @GetMapping("/by-di/{di}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     @Operation(summary = "Retrieve a patient by DI (Dossier d'Identité)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Patient not found")
     })
     public ResponseEntity<PatientResponse> getByDi(
@@ -68,9 +78,12 @@ public class PatientController {
     }
 
     @GetMapping("/by-dmi/{dmi}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     @Operation(summary = "Retrieve a patient by DMI (Dossier Médical Informatisé)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Patient not found")
     })
     public ResponseEntity<PatientResponse> getByDmi(
@@ -81,6 +94,7 @@ public class PatientController {
     // ── Search ────────────────────────────────────────────────────────────────
 
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     @Operation(summary = "Search patients — filter by di, dmi, name (first+last) or phone")
     @ApiResponse(responseCode = "200", description = "Paginated list of matching patients")
     public ResponseEntity<Page<PatientSummaryResponse>> search(
@@ -99,10 +113,13 @@ public class PatientController {
     // ── Update ────────────────────────────────────────────────────────────────
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('UROLOGUE')")
     @Operation(summary = "Update a patient's data")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient updated"),
             @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Patient not found"),
             @ApiResponse(responseCode = "409", description = "DI or DMI conflict with another patient")
     })
@@ -115,9 +132,12 @@ public class PatientController {
     // ── Delete ───────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a patient — only allowed when no linked episodes exist")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Patient deleted"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — ADMIN role required"),
             @ApiResponse(responseCode = "404", description = "Patient not found"),
             @ApiResponse(responseCode = "409", description = "Patient has linked episodes and cannot be deleted")
     })

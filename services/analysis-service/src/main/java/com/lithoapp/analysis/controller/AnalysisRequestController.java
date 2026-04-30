@@ -1,9 +1,9 @@
 package com.lithoapp.analysis.controller;
 
 import com.lithoapp.analysis.domain.enums.AnalysisStatus;
-import com.lithoapp.analysis.dto.request.CompleteAnalysisRequestDto;
 import com.lithoapp.analysis.dto.request.CreateAnalysisRequestDto;
 import com.lithoapp.analysis.dto.response.AnalysisRequestDto;
+import com.lithoapp.analysis.security.CurrentUserProvider;
 import com.lithoapp.analysis.service.AnalysisRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,22 +36,28 @@ import java.util.List;
 public class AnalysisRequestController {
 
     private final AnalysisRequestService analysisRequestService;
+    private final CurrentUserProvider currentUserProvider;
 
     // ── Create ────────────────────────────────────────────────────────────
 
     @Operation(
             summary = "Create a new analysis request",
             description = "Creates an analysis request (METABOLIC or STONE) anchored to an existing episode. " +
-                    "Both patientId and episodeId are required; the episode must belong to the patient."
+                    "Both patientId and episodeId are required; the episode must belong to the patient. " +
+                    "The createdBy field is resolved from the authenticated JWT principal."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Analysis request created"),
             @ApiResponse(responseCode = "400", description = "Validation error or patient/episode mismatch"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Patient or episode not found")
     })
     @PostMapping
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<AnalysisRequestDto> create(@Valid @RequestBody CreateAnalysisRequestDto dto) {
-        AnalysisRequestDto created = analysisRequestService.createRequest(dto);
+        String actor = currentUserProvider.getUsername();
+        AnalysisRequestDto created = analysisRequestService.createRequest(dto, actor);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -59,9 +66,12 @@ public class AnalysisRequestController {
     @Operation(summary = "Get an analysis request by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Analysis request returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Analysis request not found")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<AnalysisRequestDto> getById(
             @Parameter(description = "Analysis request ID") @PathVariable Long id) {
         return ResponseEntity.ok(analysisRequestService.getById(id));
@@ -74,6 +84,7 @@ public class AnalysisRequestController {
     )
     @ApiResponse(responseCode = "200", description = "List returned (may be empty)")
     @GetMapping("/episode/{episodeId}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<List<AnalysisRequestDto>> getByEpisode(
             @Parameter(description = "Episode ID") @PathVariable Long episodeId,
             @Parameter(description = "Optional status filter")
@@ -88,6 +99,7 @@ public class AnalysisRequestController {
     )
     @ApiResponse(responseCode = "200", description = "List returned (may be empty)")
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<List<AnalysisRequestDto>> getByPatient(
             @Parameter(description = "Patient ID") @PathVariable Long patientId,
             @Parameter(description = "Optional status filter")
@@ -108,6 +120,7 @@ public class AnalysisRequestController {
     )
     @ApiResponse(responseCode = "200", description = "List returned (empty if no filter supplied)")
     @GetMapping
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<List<AnalysisRequestDto>> list(
             @Parameter(description = "Filter by episode (primary axis)")
             @RequestParam(required = false) Long episodeId,
@@ -130,14 +143,17 @@ public class AnalysisRequestController {
 
     @Operation(
             summary = "Search analysis requests by patient identity",
-            description = "Biologist identity search — resolves DI / DMI / name / phone via patient-service (Feign) " +
+            description = "Resolves DI / DMI / name / phone via patient-service (Feign) " +
                     "and returns matching analysis requests. At least one of di, dmi, name, phone must be provided."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Matching analysis requests"),
-            @ApiResponse(responseCode = "400", description = "No identity criterion provided")
+            @ApiResponse(responseCode = "400", description = "No identity criterion provided"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden")
     })
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<List<AnalysisRequestDto>> searchByPatientIdentity(
             @Parameter(description = "Dossier d'Identité (partial match)")
             @RequestParam(required = false) String di,
@@ -166,21 +182,26 @@ public class AnalysisRequestController {
     @Operation(
             summary = "Mark an analysis request as COMPLETED",
             description = """
-                    Final lifecycle transition. METABOLIC requests should have all 3 PDFs present;
-                    STONE requests should have finalStoneType set. Direct CREATED → COMPLETED is blocked —
-                    at least one upload or field update must have moved the request to IN_PROGRESS first.
+                    Final lifecycle transition. METABOLIC requests must have at least one PDF uploaded;
+                    STONE requests must have at least one meaningful result field set.
+                    Direct CREATED → COMPLETED is blocked — at least one upload or field update
+                    must have moved the request to IN_PROGRESS first.
                     Once completed, the request becomes immutable.
+                    The completedBy actor is resolved from the authenticated JWT principal.
                     """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Request completed"),
             @ApiResponse(responseCode = "400", description = "Request is in CREATED state or required data missing"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — BIOLOGIST role required"),
             @ApiResponse(responseCode = "404", description = "Analysis request not found")
     })
     @PostMapping("/{id}/complete")
+    @PreAuthorize("hasRole('BIOLOGIST')")
     public ResponseEntity<AnalysisRequestDto> complete(
-            @Parameter(description = "Analysis request ID") @PathVariable Long id,
-            @Valid @RequestBody CompleteAnalysisRequestDto dto) {
-        return ResponseEntity.ok(analysisRequestService.completeRequest(id, dto));
+            @Parameter(description = "Analysis request ID") @PathVariable Long id) {
+        String actor = currentUserProvider.getUsername();
+        return ResponseEntity.ok(analysisRequestService.completeRequest(id, actor));
     }
 }

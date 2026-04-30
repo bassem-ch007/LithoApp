@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Episodes", description = "Clinical case folder management — one episode per stone event per patient")
@@ -32,9 +33,12 @@ public class EpisodeController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Episode created"),
             @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Patient not found")
     })
     @PostMapping
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<EpisodeResponse> createEpisode(
             @Valid @RequestBody CreateEpisodeRequest request) {
         return ResponseEntity
@@ -45,9 +49,12 @@ public class EpisodeController {
     @Operation(summary = "Get full episode details by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Episode returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Episode not found")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<EpisodeResponse> getEpisodeById(
             @Parameter(description = "Episode ID") @PathVariable Long id) {
         return ResponseEntity.ok(episodeService.getEpisodeById(id));
@@ -55,9 +62,11 @@ public class EpisodeController {
 
     @Operation(summary = "Check whether a patient has any linked episodes",
                description = "Returns true if at least one episode exists for the patient. " +
-                             "Used by patient-service to guard patient deletion.")
+                             "Used by patient-service to guard patient deletion. " +
+                             "Called via Feign with the forwarded JWT — requires authentication.")
     @ApiResponse(responseCode = "200", description = "Boolean flag returned")
     @GetMapping("/patient/{patientId}/exists")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<Boolean> hasEpisodes(
             @Parameter(description = "Patient ID") @PathVariable Long patientId) {
         return ResponseEntity.ok(episodeService.hasEpisodes(patientId));
@@ -70,6 +79,7 @@ public class EpisodeController {
     )
     @ApiResponse(responseCode = "200", description = "Paginated episode timeline (may be empty)")
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('UROLOGUE', 'BIOLOGIST', 'ADMIN')")
     public ResponseEntity<Page<EpisodeSummaryResponse>> getEpisodesByPatient(
             @Parameter(description = "Patient ID") @PathVariable Long patientId,
             @Parameter(description = "Optional status filter: ACTIVE or CLOSED")
@@ -87,9 +97,12 @@ public class EpisodeController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Episode updated"),
             @ApiResponse(responseCode = "400", description = "Validation error or illegal status transition"),
+            @ApiResponse(responseCode = "401", description = "Unauthenticated"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — UROLOGUE role required"),
             @ApiResponse(responseCode = "404", description = "Episode not found")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('UROLOGUE')")
     public ResponseEntity<EpisodeResponse> updateEpisode(
             @Parameter(description = "Episode ID") @PathVariable Long id,
             @Valid @RequestBody UpdateEpisodeRequest request) {

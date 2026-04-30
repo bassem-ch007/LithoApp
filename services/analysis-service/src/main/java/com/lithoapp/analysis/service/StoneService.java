@@ -43,7 +43,7 @@ public class StoneService {
      * which the GlobalExceptionHandler maps to HTTP 409.
      */
     @Transactional
-    public StoneResultDto updateStoneResult(Long requestId, UpdateStoneResultDto dto) {
+    public StoneResultDto updateStoneResult(Long requestId, UpdateStoneResultDto dto, String actor) {
         AnalysisRequest request = requestService.loadOrThrow(requestId);
         request.guardNotCompleted();
 
@@ -58,30 +58,30 @@ public class StoneService {
         boolean isFirstUpdate = (stone.getLastModifiedBy() == null);
 
         // ── Apply partial update, audit each changed field ────────────────
-        applyIfChanged(stone, dto.getMorphSize(),       StoneResult::getMorphSize,       StoneResult::setMorphSize,       "morphSize",        requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getMorphSurface(),    StoneResult::getMorphSurface,    StoneResult::setMorphSurface,    "morphSurface",     requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getMorphColor(),      StoneResult::getMorphColor,      StoneResult::setMorphColor,      "morphColor",       requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getMorphSection(),    StoneResult::getMorphSection,    StoneResult::setMorphSection,    "morphSection",     requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getMorphOuterLayers(),StoneResult::getMorphOuterLayers,StoneResult::setMorphOuterLayers,"morphOuterLayers", requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getMorphCore(),       StoneResult::getMorphCore,       StoneResult::setMorphCore,       "morphCore",        requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getSpectroSurface(),  StoneResult::getSpectroSurface,  StoneResult::setSpectroSurface,  "spectroSurface",   requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getSpectroSection(),  StoneResult::getSpectroSection,  StoneResult::setSpectroSection,  "spectroSection",   requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getSpectroOuterLayers(),StoneResult::getSpectroOuterLayers,StoneResult::setSpectroOuterLayers,"spectroOuterLayers",requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getSpectroCore(),     StoneResult::getSpectroCore,     StoneResult::setSpectroCore,     "spectroCore",      requestId, dto.getModifiedBy());
-        applyIfChanged(stone, dto.getFinalStoneType(),  StoneResult::getFinalStoneType,  StoneResult::setFinalStoneType,  "finalStoneType",   requestId, dto.getModifiedBy());
+        applyIfChanged(stone, dto.getMorphSize(),       StoneResult::getMorphSize,       StoneResult::setMorphSize,       "morphSize",        requestId, actor);
+        applyIfChanged(stone, dto.getMorphSurface(),    StoneResult::getMorphSurface,    StoneResult::setMorphSurface,    "morphSurface",     requestId, actor);
+        applyIfChanged(stone, dto.getMorphColor(),      StoneResult::getMorphColor,      StoneResult::setMorphColor,      "morphColor",       requestId, actor);
+        applyIfChanged(stone, dto.getMorphSection(),    StoneResult::getMorphSection,    StoneResult::setMorphSection,    "morphSection",     requestId, actor);
+        applyIfChanged(stone, dto.getMorphOuterLayers(),StoneResult::getMorphOuterLayers,StoneResult::setMorphOuterLayers,"morphOuterLayers", requestId, actor);
+        applyIfChanged(stone, dto.getMorphCore(),       StoneResult::getMorphCore,       StoneResult::setMorphCore,       "morphCore",        requestId, actor);
+        applyIfChanged(stone, dto.getSpectroSurface(),  StoneResult::getSpectroSurface,  StoneResult::setSpectroSurface,  "spectroSurface",   requestId, actor);
+        applyIfChanged(stone, dto.getSpectroSection(),  StoneResult::getSpectroSection,  StoneResult::setSpectroSection,  "spectroSection",   requestId, actor);
+        applyIfChanged(stone, dto.getSpectroOuterLayers(),StoneResult::getSpectroOuterLayers,StoneResult::setSpectroOuterLayers,"spectroOuterLayers",requestId, actor);
+        applyIfChanged(stone, dto.getSpectroCore(),     StoneResult::getSpectroCore,     StoneResult::setSpectroCore,     "spectroCore",      requestId, actor);
+        applyIfChanged(stone, dto.getFinalStoneType(),  StoneResult::getFinalStoneType,  StoneResult::setFinalStoneType,  "finalStoneType",   requestId, actor);
 
-        stone.setLastModifiedBy(dto.getModifiedBy());
+        stone.setLastModifiedBy(actor);
         stone.setLastModifiedAt(LocalDateTime.now());
         stoneResultRepository.save(stone);
 
         // Coarse-grained audit for first save
         if (isFirstUpdate) {
-            auditService.record(requestId, dto.getModifiedBy(),
+            auditService.record(requestId, actor,
                     AuditActionType.STONE_RESULT_CREATED, null, null, null);
         }
 
         // ── Auto-transition CREATED → IN_PROGRESS ─────────────────────────
-        requestService.transitionToInProgressIfNeeded(request, dto.getModifiedBy());
+        requestService.transitionToInProgressIfNeeded(request, actor);
 
         return stoneResultMapper.toDto(stone);
     }
