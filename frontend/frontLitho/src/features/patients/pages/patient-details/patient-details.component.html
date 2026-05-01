@@ -1,0 +1,248 @@
+<div class="patient-details-page">
+  <div class="page-header">
+    <a routerLink="/patients" class="back-link">
+      <i class="bi bi-arrow-left"></i> Back to Patients
+    </a>
+    @if (patient) {
+      <div class="header-row">
+        <h1>{{ patient.lastName }}, {{ patient.firstName }}</h1>
+        <button class="btn btn-primary" (click)="editPatient()">
+          <i class="bi bi-pencil"></i> Edit Patient
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Coming Soon Toast -->
+  @if (comingSoonMessage) {
+    <div class="toast-message">
+      <i class="bi bi-info-circle"></i> {{ comingSoonMessage }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Loading patient details...
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <a routerLink="/patients" class="btn btn-sm btn-back">Back to Patients</a>
+    </div>
+  }
+
+  @if (patient && !loading) {
+    <!-- Identity Card -->
+    <div class="detail-card">
+      <h2><i class="bi bi-person-badge"></i> Identity</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">DI</span>
+          <span class="value mono">{{ patient.di }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">DMI</span>
+          <span class="value mono">{{ patient.dmi }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Last Name</span>
+          <span class="value strong">{{ patient.lastName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">First Name</span>
+          <span class="value strong">{{ patient.firstName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Birth Date</span>
+          <span class="value">{{ patient.birthDate }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Gender</span>
+          <span class="value">
+            <span class="badge" [class.male]="patient.gender === 'MALE'" [class.female]="patient.gender === 'FEMALE'">
+              {{ formatGender(patient.gender) }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Info Card -->
+    <div class="detail-card">
+      <h2><i class="bi bi-clipboard2-pulse"></i> Basic Information</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Height</span>
+          <span class="value">{{ patient.height ? patient.height + ' cm' : '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Weight</span>
+          <span class="value">{{ patient.weight ? patient.weight + ' kg' : '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Phone</span>
+          <span class="value">{{ patient.phone || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Email</span>
+          <span class="value">{{ patient.email || '—' }}</span>
+        </div>
+        <div class="detail-item span-2">
+          <span class="label">Address</span>
+          <span class="value">{{ patient.address || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinical Info Card -->
+    @if (patient.clinicalInfo) {
+      <div class="detail-card">
+        <h2><i class="bi bi-heart-pulse"></i> Clinical Information</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Family History</span>
+            <span class="value">{{ formatBoolean(patient.clinicalInfo.familyHistory) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Personal History</span>
+            <span class="value">{{ formatBoolean(patient.clinicalInfo.personalHistory) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Last Episode Date</span>
+            <span class="value">{{ patient.clinicalInfo.lastEpisodeDate || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Lithiasis Type</span>
+            <span class="value">{{ patient.clinicalInfo.lithiasisType || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Frequent Infections</span>
+            <span class="value">{{ formatBoolean(patient.clinicalInfo.frequentInfections) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Single Kidney</span>
+            <span class="value">{{ formatBoolean(patient.clinicalInfo.singleKidney) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Kidney Type</span>
+            <span class="value">{{ patient.clinicalInfo.kidneyType || '—' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Chronic Renal Failure</span>
+            <span class="value">{{ formatBoolean(patient.clinicalInfo.chronicRenalFailure) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Clearance</span>
+            <span class="value">{{ patient.clinicalInfo.clearance ? patient.clinicalInfo.clearance + ' ml/min' : '—' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Medication Card -->
+    @if (patient.medication) {
+      <div class="detail-card">
+        <h2><i class="bi bi-capsule"></i> Medication</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Takes Medication</span>
+            <span class="value">{{ formatBoolean(patient.medication.hasMedication) }}</span>
+          </div>
+          @if (patient.medication.description) {
+            <div class="detail-item span-2">
+              <span class="label">Details</span>
+              <span class="value">{{ patient.medication.description }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Medical Lists -->
+    @if (patient.associatedDiseases.length || patient.geneticDiseases.length || patient.anatomicalAnomalies.length) {
+      <div class="detail-card">
+        <h2><i class="bi bi-list-check"></i> Medical Lists</h2>
+
+        @if (patient.associatedDiseases.length) {
+          <div class="list-section">
+            <h3>Associated Diseases</h3>
+            <div class="tag-list">
+              @for (d of patient.associatedDiseases; track d) {
+                <span class="tag">{{ d }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (patient.geneticDiseases.length) {
+          <div class="list-section">
+            <h3>Genetic Diseases</h3>
+            <div class="tag-list">
+              @for (d of patient.geneticDiseases; track d) {
+                <span class="tag genetic">{{ d }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (patient.anatomicalAnomalies.length) {
+          <div class="list-section">
+            <h3>Anatomical Anomalies</h3>
+            <div class="tag-list">
+              @for (a of patient.anatomicalAnomalies; track a) {
+                <span class="tag anomaly">{{ a }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Workflow Actions -->
+    <div class="detail-card workflow-card">
+      <h2><i class="bi bi-kanban"></i> Medical Workflow</h2>
+      <p class="workflow-subtitle">Manage the full clinical workflow for this patient from here.</p>
+      <div class="workflow-grid">
+        <button class="workflow-btn" (click)="createEpisode()">
+          <i class="bi bi-journal-medical"></i>
+          <span class="wf-title">Create Episode</span>
+          <span class="wf-badge ready">Available</span>
+        </button>
+        <button class="workflow-btn" (click)="viewEpisodes()">
+          <i class="bi bi-journals"></i>
+          <span class="wf-title">View Episodes</span>
+          <span class="wf-badge ready">Available</span>
+        </button>
+        <button class="workflow-btn" (click)="showComingSoon()">
+          <i class="bi bi-file-earmark-medical"></i>
+          <span class="wf-title">Create Analysis Request</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+        <button class="workflow-btn" (click)="showComingSoon()">
+          <i class="bi bi-clipboard2-data"></i>
+          <span class="wf-title">View Analysis Requests</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+        <button class="workflow-btn" (click)="showComingSoon()">
+          <i class="bi bi-droplet-half"></i>
+          <span class="wf-title">Manage Drainage / JJ</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+        <button class="workflow-btn" (click)="showComingSoon()">
+          <i class="bi bi-clock-history"></i>
+          <span class="wf-title">Patient Timeline</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="meta-info">
+      Created: {{ patient.createdAt | date:'medium' }} &middot; Updated: {{ patient.updatedAt | date:'medium' }}
+    </div>
+  }
+</div>

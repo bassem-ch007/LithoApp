@@ -1,0 +1,240 @@
+<div class="patient-form-page">
+  <div class="page-header">
+    <a routerLink="/patients" class="back-link">
+      <i class="bi bi-arrow-left"></i> Back to Patients
+    </a>
+    <h1>{{ isEditMode ? 'Edit Patient' : 'New Patient' }}</h1>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Loading patient data...
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
+  }
+
+  @if (!loading) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
+      <!-- Identity -->
+      <section class="form-section">
+        <h2>Identity</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="di">DI <span class="required">*</span></label>
+            <input id="di" type="text" formControlName="di" [class.invalid]="hasError('di')" />
+            @if (hasError('di')) { <span class="field-error">{{ getError('di') }}</span> }
+          </div>
+          <div class="form-group">
+            <label for="dmi">DMI <span class="required">*</span></label>
+            <input id="dmi" type="text" formControlName="dmi" [class.invalid]="hasError('dmi')" />
+            @if (hasError('dmi')) { <span class="field-error">{{ getError('dmi') }}</span> }
+          </div>
+        </div>
+      </section>
+
+      <!-- Personal Info -->
+      <section class="form-section">
+        <h2>Personal Information</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="lastName">Last Name <span class="required">*</span></label>
+            <input id="lastName" type="text" formControlName="lastName" [class.invalid]="hasError('lastName')" />
+            @if (hasError('lastName')) { <span class="field-error">{{ getError('lastName') }}</span> }
+          </div>
+          <div class="form-group">
+            <label for="firstName">First Name <span class="required">*</span></label>
+            <input id="firstName" type="text" formControlName="firstName" [class.invalid]="hasError('firstName')" />
+            @if (hasError('firstName')) { <span class="field-error">{{ getError('firstName') }}</span> }
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="birthDate">Birth Date <span class="required">*</span></label>
+            <input id="birthDate" type="date" formControlName="birthDate" [class.invalid]="hasError('birthDate')" />
+            @if (hasError('birthDate')) { <span class="field-error">{{ getError('birthDate') }}</span> }
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender <span class="required">*</span></label>
+            <select id="gender" formControlName="gender" [class.invalid]="hasError('gender')">
+              <option value="">Select gender</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+            @if (hasError('gender')) { <span class="field-error">{{ getError('gender') }}</span> }
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="height">Height (cm)</label>
+            <input id="height" type="number" formControlName="height" min="0" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label for="weight">Weight (kg)</label>
+            <input id="weight" type="number" formControlName="weight" min="0" step="0.1" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section class="form-section">
+        <h2>Contact</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input id="phone" type="tel" formControlName="phone" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" [class.invalid]="hasError('email')" />
+            @if (hasError('email')) { <span class="field-error">{{ getError('email') }}</span> }
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="address">Address</label>
+            <input id="address" type="text" formControlName="address" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Clinical Info -->
+      <section class="form-section">
+        <h2>Clinical Information</h2>
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="familyHistory" /> Family History of Lithiasis</label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="personalHistory" /> Personal History of Lithiasis</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="lastEpisodeDate">Last Episode Date</label>
+            <input id="lastEpisodeDate" type="date" formControlName="lastEpisodeDate" />
+          </div>
+          <div class="form-group">
+            <label for="lithiasisType">Lithiasis Type</label>
+            <input id="lithiasisType" type="text" formControlName="lithiasisType" placeholder="e.g., Calcium oxalate" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="frequentInfections" /> Frequent Urinary Infections</label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="singleKidney" /> Single Kidney</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="kidneyType">Kidney Type</label>
+            <select id="kidneyType" formControlName="kidneyType">
+              <option [ngValue]="null">Not specified</option>
+              <option value="ANATOMICAL">Anatomical</option>
+              <option value="FUNCTIONAL">Functional</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="chronicRenalFailure" /> Chronic Renal Failure</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clearance">Clearance (ml/min)</label>
+            <input id="clearance" type="number" formControlName="clearance" min="0" step="0.1" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Medication -->
+      <section class="form-section">
+        <h2>Medication</h2>
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" formControlName="hasMedication" /> Patient takes medication</label>
+          </div>
+        </div>
+        @if (form.value.hasMedication) {
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="medicationDescription">Medication Details</label>
+              <textarea id="medicationDescription" formControlName="medicationDescription" rows="3"></textarea>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Associated Diseases -->
+      <section class="form-section">
+        <h2>Associated Diseases</h2>
+        <div class="list-editor" formArrayName="associatedDiseases">
+          @for (ctrl of associatedDiseases.controls; track $index; let i = $index) {
+            <div class="list-item">
+              <input type="text" [formControlName]="i" placeholder="Disease name" />
+              <button type="button" class="btn-remove" (click)="removeListItem('associatedDiseases', i)">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          }
+          <button type="button" class="btn btn-add" (click)="addListItem('associatedDiseases')">
+            <i class="bi bi-plus"></i> Add Disease
+          </button>
+        </div>
+      </section>
+
+      <!-- Genetic Diseases -->
+      <section class="form-section">
+        <h2>Genetic Diseases</h2>
+        <div class="list-editor" formArrayName="geneticDiseases">
+          @for (ctrl of geneticDiseases.controls; track $index; let i = $index) {
+            <div class="list-item">
+              <input type="text" [formControlName]="i" placeholder="Genetic disease name" />
+              <button type="button" class="btn-remove" (click)="removeListItem('geneticDiseases', i)">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          }
+          <button type="button" class="btn btn-add" (click)="addListItem('geneticDiseases')">
+            <i class="bi bi-plus"></i> Add Genetic Disease
+          </button>
+        </div>
+      </section>
+
+      <!-- Anatomical Anomalies -->
+      <section class="form-section">
+        <h2>Anatomical Anomalies</h2>
+        <div class="list-editor" formArrayName="anatomicalAnomalies">
+          @for (ctrl of anatomicalAnomalies.controls; track $index; let i = $index) {
+            <div class="list-item">
+              <input type="text" [formControlName]="i" placeholder="Anomaly name" />
+              <button type="button" class="btn-remove" (click)="removeListItem('anatomicalAnomalies', i)">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          }
+          <button type="button" class="btn btn-add" (click)="addListItem('anatomicalAnomalies')">
+            <i class="bi bi-plus"></i> Add Anomaly
+          </button>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a routerLink="/patients" class="btn btn-cancel">Cancel</a>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          @if (saving) {
+            <i class="bi bi-arrow-repeat spin"></i> Saving...
+          } @else {
+            <i class="bi bi-check-lg"></i> {{ isEditMode ? 'Update Patient' : 'Create Patient' }}
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

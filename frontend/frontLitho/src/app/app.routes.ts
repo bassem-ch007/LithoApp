@@ -57,7 +57,53 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['UROLOGUE'] },
         loadComponent: () =>
-          import('../features/patients/patients.component').then(m => m.PatientsComponent)
+          import('../features/patients/patients.component').then(m => m.PatientsComponent),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('../features/patients/pages/patient-list/patient-list.component').then(m => m.PatientListComponent)
+          },
+          {
+            path: 'new',
+            loadComponent: () =>
+              import('../features/patients/pages/patient-form/patient-form.component').then(m => m.PatientFormComponent)
+          },
+          {
+            path: ':patientId/episodes',
+            loadComponent: () =>
+              import('../features/episodes/pages/episode-list/episode-list.component').then(m => m.EpisodeListComponent)
+          },
+          {
+            path: ':patientId/episodes/new',
+            loadComponent: () =>
+              import('../features/episodes/pages/episode-form/episode-form.component').then(m => m.EpisodeFormComponent)
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('../features/patients/pages/patient-details/patient-details.component').then(m => m.PatientDetailsComponent)
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('../features/patients/pages/patient-form/patient-form.component').then(m => m.PatientFormComponent)
+          }
+        ]
+      },
+      {
+        path: 'episodes/:episodeId',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/episodes/pages/episode-details/episode-details.component').then(m => m.EpisodeDetailsComponent)
+      },
+      {
+        path: 'episodes/:episodeId/edit',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/episodes/pages/episode-form/episode-form.component').then(m => m.EpisodeFormComponent)
       },
       {
         path: 'episodes',

@@ -1,0 +1,112 @@
+<div class="episode-details-page">
+  <div class="page-header">
+    @if (episode) {
+      <a [routerLink]="['/patients', episode.patientId, 'episodes']" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Patient Episodes
+      </a>
+    }
+    <div class="header-row">
+      <div>
+        <h1>{{ episode?.title || ('Episode #' + episode?.id) }}</h1>
+        @if (episode) {
+          <p class="patient-context">
+            Patient ID {{ episode.patientId }}
+            @if (patient) {
+              <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+              <span>DI {{ patient.di }}</span>
+              <span>DMI {{ patient.dmi }}</span>
+            } @else if (patientLoading) {
+              <span>Loading patient context...</span>
+            }
+          </p>
+        }
+      </div>
+      @if (episode) {
+        <div class="header-actions">
+          <a [routerLink]="['/episodes', episode.id, 'edit']" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Edit Episode
+          </a>
+          <span class="status-badge" [class.closed]="episode.status === 'CLOSED'">{{ episode.status }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Loading episode details...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      @if (episodeId) {
+        <button class="btn btn-sm btn-back" (click)="loadEpisode()">Retry</button>
+      }
+    </div>
+  }
+
+  @if (episode && !loading) {
+    <div class="detail-card">
+      <h2><i class="bi bi-folder2-open"></i> Case Folder</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Episode ID</span>
+          <span class="value mono">{{ episode.id }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Patient ID</span>
+          <span class="value mono">{{ episode.patientId }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Status</span>
+          <span class="value">
+            <span class="status-badge inline" [class.closed]="episode.status === 'CLOSED'">{{ episode.status }}</span>
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Opened At</span>
+          <span class="value">{{ episode.openedAt }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Recurrence</span>
+          <span class="value">{{ formatBoolean(episode.recurrence) }}</span>
+        </div>
+        <div class="detail-item span-2">
+          <span class="label">Title</span>
+          <span class="value strong">{{ episode.title || 'Untitled episode' }}</span>
+        </div>
+        <div class="detail-item span-3">
+          <span class="label">Notes</span>
+          <span class="value notes">{{ episode.notes || 'No notes recorded.' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card workflow-card">
+      <h2><i class="bi bi-kanban"></i> Episode Workflow</h2>
+      <div class="workflow-grid">
+        <button class="workflow-btn" disabled>
+          <i class="bi bi-file-earmark-medical"></i>
+          <span class="wf-title">Analysis requests</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+        <button class="workflow-btn" disabled>
+          <i class="bi bi-droplet-half"></i>
+          <span class="wf-title">Drainage / JJ tracking</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+        <button class="workflow-btn" disabled>
+          <i class="bi bi-image"></i>
+          <span class="wf-title">Stone images</span>
+          <span class="wf-badge">Coming soon</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="meta-info">
+      Created: {{ episode.createdAt | date:'medium' }} &middot; Updated: {{ episode.updatedAt | date:'medium' }}
+    </div>
+  }
+</div>
