@@ -1,0 +1,299 @@
+.episode-details-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+
+    &:hover {
+      color: #3b82f6;
+    }
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+  }
+}
+
+.patient-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0.35rem 0 0;
+
+  span {
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 0.12rem 0.4rem;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+
+  &:hover {
+    background: #2563eb;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-back {
+  background: #f1f5f9;
+  color: #475569;
+  margin-top: 1rem;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+}
+
+.state-message {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+
+  i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  &.error {
+    color: #dc2626;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  &.loading i {
+    color: #3b82f6;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.detail-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+
+    i {
+      color: #3b82f6;
+    }
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  &.span-2 {
+    grid-column: span 2;
+  }
+
+  &.span-3 {
+    grid-column: span 3;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .value {
+    font-size: 0.9rem;
+    color: #334155;
+
+    &.strong {
+      font-weight: 600;
+    }
+
+    &.mono {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85rem;
+    }
+
+    &.notes {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+  }
+}
+
+.status-badge,
+.wf-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.16rem 0.55rem;
+}
+
+.status-badge {
+  color: #047857;
+  background: #d1fae5;
+
+  &.closed {
+    color: #475569;
+    background: #e2e8f0;
+  }
+
+  &.inline {
+    align-self: flex-start;
+  }
+}
+
+.workflow-card {
+  border-color: #c7d2fe;
+  background: #fafafe;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.workflow-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.1rem 0.75rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #334155;
+  cursor: not-allowed;
+  opacity: 0.72;
+
+  i {
+    font-size: 1.5rem;
+    color: #6366f1;
+  }
+
+  .wf-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .wf-badge {
+    background: #f1f5f9;
+    color: #94a3b8;
+  }
+}
+
+.meta-info {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 1rem;
+  padding: 0.5rem;
+}
+
+@media (max-width: 720px) {
+  .page-header .header-row,
+  .workflow-grid,
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header .header-row {
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
+  .detail-item.span-2,
+  .detail-item.span-3 {
+    grid-column: span 1;
+  }
+}
