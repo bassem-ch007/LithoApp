@@ -20,7 +20,7 @@ import java.util.UUID;
  * Storage key format: "{uuid}{extension}"  (e.g. "a3f8c2d1-….pdf")
  * Objects are stored in the bucket configured via {@code storage.minio.bucket}.
  *
- * Active when: storage.type=minio in application.properties.
+ * Active when: storage.type=minio in application.yml.
  */
 @Slf4j
 @Component

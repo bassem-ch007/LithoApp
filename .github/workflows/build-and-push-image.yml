@@ -30,10 +30,10 @@ jobs:
 
           if [ "${{ inputs.service }}" = "frontend" ]; then
             echo "IMAGE_NAME=lithoapp-frontend" >> $GITHUB_ENV
-            echo "BUILD_CONTEXT=frontend/frontLitho" >> $GITHUB_ENV
+            echo "DOCKERFILE=shared/docker/frontend/Dockerfile" >> $GITHUB_ENV
           else
             echo "IMAGE_NAME=lithoapp-${{ inputs.service }}" >> $GITHUB_ENV
-            echo "BUILD_CONTEXT=services/${{ inputs.service }}" >> $GITHUB_ENV
+            echo "DOCKERFILE=shared/docker/${{ inputs.service }}/Dockerfile" >> $GITHUB_ENV
           fi
 
       - name: Login to Docker Hub
@@ -45,12 +45,14 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            -f "$DOCKERFILE" \
             -t ${{ vars.DOCKERHUB_NAMESPACE }}/${IMAGE_NAME}:${IMAGE_TAG} \
-            "$BUILD_CONTEXT"
+            .
 
       - name: Push image
         run: |
-          docker push ${{ vars.DOCKERHUB_NAMESPACE }}/${IMAGE_NAME}:${IMAGE_TAG}
+          docker push \
+            ${{ vars.DOCKERHUB_NAMESPACE }}/${IMAGE_NAME}:${IMAGE_TAG}
 
       - name: Show pushed image
         run: |
