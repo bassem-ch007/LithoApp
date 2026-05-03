@@ -28,7 +28,7 @@ jobs:
           docker build \
             -t ${{ vars.DOCKERHUB_NAMESPACE }}/${IMAGE_NAME}:${IMAGE_TAG} \
             -f services/api-gateway/Dockerfile \
-            .
+            services/api-gateway
 
       - name: Push image
         run: |
