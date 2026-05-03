@@ -1,0 +1,16 @@
+services:
+  lan-demo:
+    image: nginx:1.27-alpine
+    container_name: litho-lan-demo
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - litho-demo-net
+
+networks:
+  litho-demo-net:
+    name: litho-demo-net
+    driver: bridge
