@@ -26,3 +26,7 @@ shared/k8s/base/secrets
 shared/postman
 frontend/frontend.iml
 .claude/
+shared/docker/prod/.env.prod
+shared/docker/prod/.env.prod.example
+shared/local/*
+shared/DEPLOYMENT_DEPENDENCIES.md

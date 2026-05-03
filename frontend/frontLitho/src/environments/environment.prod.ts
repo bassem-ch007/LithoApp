@@ -1,8 +1,10 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://localhost:9090',
+  // Point to the API Gateway port defined in your README
+  apiBaseUrl: 'http://192.168.1.13:30090',
   keycloak: {
-    url: 'https://your-keycloak-domain.com',
+    // Point to the Keycloak port defined in your README
+    url: 'http://192.168.1.13:30081',
     realm: 'medical-platform',
     clientId: 'frontend-client'
   }
