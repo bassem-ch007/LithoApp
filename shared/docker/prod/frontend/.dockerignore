@@ -1,0 +1,16 @@
+.git
+.idea
+.vscode
+target
+node_modules
+dist
+.angular
+logs
+tmp
+*.log
+*.tmp
+.env
+.env.*
+Dockerfile
+docker-compose*.yml
+docker-compose*.yaml

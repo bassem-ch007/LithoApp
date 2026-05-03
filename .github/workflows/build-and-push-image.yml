@@ -30,10 +30,10 @@ jobs:
 
           if [ "${{ inputs.service }}" = "frontend" ]; then
             echo "IMAGE_NAME=lithoapp-frontend" >> $GITHUB_ENV
-            echo "DOCKERFILE=shared/docker/frontend/Dockerfile" >> $GITHUB_ENV
+            echo "DOCKERFILE=shared/docker/prod/frontend/Dockerfile" >> $GITHUB_ENV
           else
             echo "IMAGE_NAME=lithoapp-${{ inputs.service }}" >> $GITHUB_ENV
-            echo "DOCKERFILE=shared/docker/${{ inputs.service }}/Dockerfile" >> $GITHUB_ENV
+            echo "DOCKERFILE=shared/docker/prod/${{ inputs.service }}/Dockerfile" >> $GITHUB_ENV
           fi
 
       - name: Login to Docker Hub

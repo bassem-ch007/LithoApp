@@ -1,1 +1,0 @@
-Web-based microservices application designed to improve the metabolic follow-up and ureteral stent management in urolithiasis patients. The system enables patient tracking, analysis request management, and automated notification of overdue stents using a Spring Boot and Angular architecture.
