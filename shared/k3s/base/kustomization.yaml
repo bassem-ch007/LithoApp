@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - configmaps/lithoapp-common-config.yaml
+  - configmaps/postgres-initdb-configmap.yaml
+  - postgres/postgres-pvc.yaml
+  - postgres/postgres-service.yaml
+  - postgres/postgres-deployment.yaml
+  - keycloak/keycloak-service.yaml
+  - keycloak/keycloak-deployment.yaml
+  - minio/minio-pvc.yaml
+  - minio/minio-service.yaml
+  - minio/minio-deployment.yaml
+  - minio/minio-bucket-job.yaml
+  - patient-service/service.yaml
+  - patient-service/deployment.yaml
+  - episode-service/service.yaml
+  - episode-service/deployment.yaml
+  - analysis-service/service.yaml
+  - analysis-service/deployment.yaml
+  - drainage-service/service.yaml
+  - drainage-service/deployment.yaml
+  - api-gateway/service.yaml
+  - api-gateway/deployment.yaml
+  - frontend/service.yaml
+  - frontend/deployment.yaml
+  - cloudflare/cloudflared-config.yaml
+  - cloudflare/cloudflared-deployment.yaml
+
