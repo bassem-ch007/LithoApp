@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: lithoapp
+data:
+  config.yaml: |
+    credentials-file: /etc/cloudflared/credentials/credentials.json
+    no-autoupdate: true
+    protocol: http2
+    ingress:
+      - hostname: lithoapp.online
+        service: http://frontend:80
+      - hostname: api.lithoapp.online
+        service: http://api-gateway:9090
+      - hostname: auth.lithoapp.online
+        service: http://keycloak:8080
+      - service: http_status:404
+

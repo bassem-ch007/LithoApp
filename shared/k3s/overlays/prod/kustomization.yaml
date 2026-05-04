@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: lithoapp
+resources:
+  - ../../base
+images:
+  - name: docker.io/bassem00/lithoapp-patient-service
+    newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-episode-service
+    newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-analysis-service
+    newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-drainage-service
+    newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-api-gateway
+    newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-frontend
+    newTag: replace-with-git-sha
+

@@ -1,6 +1,7 @@
 package com.lithoApp.api_gateway.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,6 +12,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -41,15 +43,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${FRONTEND_ALLOWED_ORIGIN:https://*.lithoapp.local}") String frontendAllowedOrigins) {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of(
+
+        List<String> allowedOriginPatterns = new ArrayList<>();
+        for (String origin : frontendAllowedOrigins.split(",")) {
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty()) {
+                allowedOriginPatterns.add(trimmed);
+            }
+        }
+        allowedOriginPatterns.addAll(List.of(
             "http://localhost:4200",
             "https://*.lithoapp.local",
-                "http://localhost:4300",
-                "http://127.0.0.1:4200",
-                "http://127.0.0.1:4300"
+            "http://localhost:4300",
+            "http://127.0.0.1:4200",
+            "http://127.0.0.1:4300"
         ));
+        cfg.setAllowedOriginPatterns(allowedOriginPatterns);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         cfg.setExposedHeaders(List.of("Location", "Content-Disposition"));
