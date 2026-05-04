@@ -64,4 +64,13 @@ public interface DrainageRepository extends JpaRepository<Drainage, UUID>,
             DrainageStatus status,
             LocalDate plannedRemovalDate
     );
+
+    /**
+     * Finds active drainages whose planned removal date is in the past
+     * and whose overdue reminder has not been sent yet.
+     */
+    List<Drainage> findByStatusAndPlannedRemovalDateBeforeAndOverdueReminderSentAtIsNull(
+            DrainageStatus status,
+            LocalDate referenceDate
+    );
 }

@@ -1,0 +1,86 @@
+<div class="drainage-list-page">
+  <div class="page-header">
+    <a [routerLink]="backLink" class="back-link">
+      <i class="bi bi-arrow-left"></i>
+      Retour au {{ scope === 'episode' ? 'l\'épisode' : 'patient' }}
+    </a>
+    <div class="header-row">
+      <div>
+        <h1>Enregistrements de drainage</h1>
+        <p class="patient-context">
+          @if (scope === 'episode' && episode) {
+            <span>Épisode #{{ episode.id }}</span>
+          } @else if (patientId) {
+            <span>Tous les épisodes</span>
+          }
+          @if (patient) {
+            <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+            <span>DI {{ patient.di }}</span>
+            <span>DMI {{ patient.dmi }}</span>
+          }
+        </p>
+      </div>
+      @if (canCreate && scope === 'episode') {
+        <button class="btn btn-primary" (click)="createDrainage()">
+          <i class="bi bi-plus-lg"></i> Nouveau drainage
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des drainages...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <button class="btn btn-sm btn-secondary" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (!loading && !error && drainages.length === 0) {
+    <div class="state-message empty">
+      <i class="bi bi-droplet-half"></i>
+      <p>Aucun drainage enregistré.</p>
+      @if (canCreate && scope === 'episode') {
+        <button class="btn btn-primary btn-sm" (click)="createDrainage()">
+          <i class="bi bi-plus-lg"></i> Créer le premier
+        </button>
+      }
+    </div>
+  }
+
+  @if (!loading && !error && drainages.length > 0) {
+    <div class="drainage-grid">
+      @for (d of drainages; track d.id) {
+        <article class="drainage-card" (click)="open(d)">
+          <div class="topline">
+            <span class="type-badge">
+              <i class="bi bi-droplet"></i> {{ typeLabels[d.drainageType] }}
+            </span>
+            <span class="side-badge">{{ sideLabels[d.side] }}</span>
+            <span class="status-badge" [ngClass]="statusClass(d)">{{ statusLabel(d) }}</span>
+          </div>
+          <div class="meta">
+            <span><i class="bi bi-calendar-event"></i> Posé le {{ d.placedAt }}</span>
+            @if (d.plannedRemovalDate) {
+              <span><i class="bi bi-calendar-check"></i> Retrait prévu le {{ d.plannedRemovalDate }}</span>
+            }
+            @if (d.removedAt) {
+              <span><i class="bi bi-check2-circle"></i> Retiré le {{ d.removedAt }}</span>
+            }
+            @if (d.jjType) {
+              <span><i class="bi bi-tag"></i> {{ jjLabels[d.jjType] }}</span>
+            }
+          </div>
+          <button class="btn btn-secondary btn-sm" (click)="open(d); $event.stopPropagation()">
+            <i class="bi bi-eye"></i> Ouvrir
+          </button>
+        </article>
+      }
+    </div>
+  }
+</div>

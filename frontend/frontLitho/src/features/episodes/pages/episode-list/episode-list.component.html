@@ -1,11 +1,11 @@
 <div class="episode-list-page">
   <div class="page-header">
     <a [routerLink]="['/patients', patientId]" class="back-link">
-      <i class="bi bi-arrow-left"></i> Back to Patient
+      <i class="bi bi-arrow-left"></i> Retour au patient
     </a>
     <div class="header-row">
       <div>
-        <h1>Clinical Episodes</h1>
+        <h1>Épisodes cliniques</h1>
         @if (patient) {
           <p class="patient-context">
             {{ patient.lastName }}, {{ patient.firstName }}
@@ -13,34 +13,34 @@
             <span>DMI {{ patient.dmi }}</span>
           </p>
         } @else if (patientLoading) {
-          <p class="patient-context">Loading patient context...</p>
+          <p class="patient-context">Chargement du contexte patient...</p>
         }
       </div>
       <button class="btn btn-primary" (click)="createEpisode()">
-        <i class="bi bi-plus-lg"></i> Create Episode
+        <i class="bi bi-plus-lg"></i> Créer un épisode
       </button>
     </div>
   </div>
 
   @if (loading) {
     <div class="state-message loading">
-      <i class="bi bi-arrow-repeat spin"></i> Loading episodes...
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des épisodes...
     </div>
   }
 
   @if (error && !loading) {
     <div class="state-message error">
       <i class="bi bi-exclamation-triangle"></i> {{ error }}
-      <button class="btn btn-sm btn-retry" (click)="loadEpisodes()">Retry</button>
+      <button class="btn btn-sm btn-retry" (click)="loadEpisodes()">Réessayer</button>
     </div>
   }
 
   @if (!loading && !error && episodes.length === 0) {
     <div class="state-message empty">
       <i class="bi bi-journals"></i>
-      <p>No clinical episodes have been opened for this patient yet.</p>
+      <p>Aucun épisode clinique n'a encore été ouvert pour ce patient.</p>
       <button class="btn btn-primary btn-sm" (click)="createEpisode()">
-        <i class="bi bi-plus-lg"></i> Create Episode
+        <i class="bi bi-plus-lg"></i> Créer un épisode
       </button>
     </div>
   }
@@ -50,18 +50,18 @@
       @for (episode of episodes; track episode.id) {
         <article class="episode-card">
           <div class="episode-topline">
-            <span class="status-badge" [class.closed]="episode.status === 'CLOSED'">{{ episode.status }}</span>
+            <span class="status-badge" [class.closed]="episode.status === 'CLOSED'">{{ statusLabel(episode.status) }}</span>
             @if (episode.recurrence) {
-              <span class="recurrence-badge">Recurrence</span>
+              <span class="recurrence-badge">Récidive</span>
             }
           </div>
-          <h2>{{ episode.title || ('Episode #' + episode.id) }}</h2>
+          <h2>{{ episode.title || ('Épisode #' + episode.id) }}</h2>
           <div class="episode-meta">
-            <span><i class="bi bi-calendar-event"></i> Opened {{ episode.openedAt }}</span>
-            <span><i class="bi bi-clock"></i> Created {{ episode.createdAt | date:'mediumDate' }}</span>
+            <span><i class="bi bi-calendar-event"></i> Ouvert le {{ episode.openedAt }}</span>
+            <span><i class="bi bi-clock"></i> Créé le {{ episode.createdAt | date:'mediumDate' }}</span>
           </div>
           <button class="btn btn-secondary" (click)="viewEpisode(episode.id)">
-            <i class="bi bi-eye"></i> View details
+            <i class="bi bi-eye"></i> Voir les détails
           </button>
         </article>
       }
@@ -86,7 +86,7 @@
         <button class="btn-page" [disabled]="currentPage >= totalPages - 1" (click)="goToPage(totalPages - 1)">
           <i class="bi bi-chevron-double-right"></i>
         </button>
-        <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }} ({{ totalElements }} episodes)</span>
+        <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }} ({{ totalElements }} épisodes)</span>
       </div>
     }
   }

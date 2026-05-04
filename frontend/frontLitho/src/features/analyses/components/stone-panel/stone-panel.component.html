@@ -1,0 +1,79 @@
+<div class="stone-panel">
+  @if (analysis.status === 'COMPLETED') {
+    <div class="readonly-banner">
+      <i class="bi bi-lock"></i> Cette analyse est terminée et en lecture seule.
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="stone-form">
+    <section class="stone-section">
+      <h3>Description morphologique</h3>
+      <div class="grid">
+        @for (field of morphFields; track field.key) {
+          <div class="form-group">
+            <label>{{ field.label }}</label>
+            @if (canEdit) {
+              <input type="text" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''" />
+            } @else {
+              <span class="value">{{ fieldValue($any(field.key)) }}</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="stone-section">
+      <h3>Spectrophotométrie</h3>
+      <div class="grid">
+        @for (field of spectroFields; track field.key) {
+          <div class="form-group">
+            <label>{{ field.label }}</label>
+            @if (canEdit) {
+              <input type="text" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''" />
+            } @else {
+              <span class="value">{{ fieldValue($any(field.key)) }}</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="stone-section">
+      <h3>Classification finale</h3>
+      <div class="form-group">
+        <label>Type de calcul (Daudon)</label>
+        @if (canEdit) {
+          <input type="text" formControlName="finalStoneType" placeholder="ex. Ia" />
+        } @else {
+          <span class="value">{{ fieldValue('finalStoneType') }}</span>
+        }
+      </div>
+    </section>
+
+    @if (result?.lastModifiedAt) {
+      <p class="meta-info">
+        Dernière modification par <strong>{{ result?.lastModifiedBy }}</strong>
+        le {{ result?.lastModifiedAt | date:'medium' }}
+      </p>
+    }
+
+    @if (saveError) {
+      <p class="alert alert-error"><i class="bi bi-exclamation-triangle"></i> {{ saveError }}</p>
+    }
+    @if (saveSuccess) {
+      <p class="alert alert-success"><i class="bi bi-check2-circle"></i> {{ saveSuccess }}</p>
+    }
+
+    @if (canEdit) {
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          @if (saving) {
+            <i class="bi bi-arrow-repeat spin"></i> Enregistrement...
+          } @else {
+            <i class="bi bi-save"></i> Enregistrer l'avancement
+          }
+        </button>
+      </div>
+    }
+  </form>
+</div>

@@ -1,0 +1,174 @@
+<div class="drainage-details-page">
+  <div class="page-header">
+    <a [routerLink]="backLink" class="back-link">
+      <i class="bi bi-arrow-left"></i> Retour aux drainages
+    </a>
+    <div class="header-row">
+      <div>
+        <h1>
+          @if (drainage) {
+            {{ typeLabels[drainage.drainageType] }} ({{ sideLabels[drainage.side] }})
+          } @else {
+            Drainage
+          }
+        </h1>
+        @if (drainage) {
+          <p class="patient-context">
+            <span>Épisode #{{ drainage.episodeId }}</span>
+            @if (patient) {
+              <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+              <span>DI {{ patient.di }}</span>
+              <span>DMI {{ patient.dmi }}</span>
+            }
+          </p>
+        }
+      </div>
+      @if (drainage) {
+        <div class="header-actions">
+          <span class="status-badge" [ngClass]="statusClass()">{{ statusLabel() }}</span>
+          @if (canEdit && !editMode && !removeMode) {
+            <button class="btn btn-secondary" (click)="startEdit()">
+              <i class="bi bi-pencil"></i> Modifier
+            </button>
+          }
+          @if (canRemove && !editMode && !removeMode) {
+            <button class="btn btn-danger" (click)="startRemove()">
+              <i class="bi bi-check2-circle"></i> Marquer comme retiré
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement du drainage...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <button class="btn btn-sm btn-secondary" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (successMessage) {
+    <div class="alert alert-success">
+      <i class="bi bi-check2-circle"></i> {{ successMessage }}
+    </div>
+  }
+
+  @if (drainage && !loading && !error) {
+    <div class="detail-card">
+      <h2><i class="bi bi-info-circle"></i> Informations du drainage</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Type</span>
+          <span class="value">{{ typeLabels[drainage.drainageType] }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Côté</span>
+          <span class="value">{{ sideLabels[drainage.side] }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Statut</span>
+          <span class="value">
+            <span class="status-badge inline" [ngClass]="statusClass()">{{ statusLabel() }}</span>
+          </span>
+        </div>
+        @if (drainage.jjType) {
+          <div class="detail-item">
+            <span class="label">Type de sonde JJ</span>
+            <span class="value">{{ jjLabels[drainage.jjType] }}</span>
+          </div>
+        }
+        <div class="detail-item">
+          <span class="label">Date de pose</span>
+          <span class="value">{{ drainage.placedAt }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Retrait prévu</span>
+          <span class="value">{{ drainage.plannedRemovalDate || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Retiré le</span>
+          <span class="value">{{ drainage.removedAt || '-' }}</span>
+        </div>
+        @if (drainage.doctorUsername) {
+          <div class="detail-item">
+            <span class="label">Médecin référent</span>
+            <span class="value">{{ drainage.doctorUsername }}</span>
+          </div>
+        }
+        <div class="detail-item span-3">
+          <span class="label">Notes</span>
+          <span class="value notes">{{ drainage.notes || 'Aucune note enregistrée.' }}</span>
+        </div>
+      </div>
+      <div class="meta-info">
+        Créé le {{ drainage.createdAt | date:'medium' }} &middot; Mis à jour le {{ drainage.updatedAt | date:'medium' }}
+      </div>
+    </div>
+
+    @if (editMode) {
+      <div class="detail-card">
+        <h2><i class="bi bi-pencil-square"></i> Modifier le drainage</h2>
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="form-grid">
+          <div class="form-group">
+            <label>Date prévue de retrait</label>
+            <input type="date" formControlName="plannedRemovalDate" />
+            <span class="field-hint">Laisser vide pour effacer.</span>
+          </div>
+          <div class="form-group full-width">
+            <label>Notes</label>
+            <textarea formControlName="notes" rows="3"></textarea>
+          </div>
+          @if (saveError) {
+            <p class="alert alert-error full-width">
+              <i class="bi bi-exclamation-triangle"></i> {{ saveError }}
+            </p>
+          }
+          <div class="form-actions full-width">
+            <button type="button" class="btn btn-cancel" (click)="cancelEdit()">Annuler</button>
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              @if (saving) {
+                <i class="bi bi-arrow-repeat spin"></i> Enregistrement...
+              } @else {
+                <i class="bi bi-save"></i> Enregistrer
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    @if (removeMode) {
+      <div class="detail-card">
+        <h2><i class="bi bi-check2-circle"></i> Marquer comme retiré</h2>
+        <form [formGroup]="removeForm" (ngSubmit)="confirmRemove()" class="form-grid">
+          <div class="form-group">
+            <label>Date réelle de retrait <span class="required">*</span></label>
+            <input type="date" formControlName="removedAt" />
+          </div>
+          @if (removeError) {
+            <p class="alert alert-error full-width">
+              <i class="bi bi-exclamation-triangle"></i> {{ removeError }}
+            </p>
+          }
+          <div class="form-actions full-width">
+            <button type="button" class="btn btn-cancel" (click)="cancelRemove()">Annuler</button>
+            <button type="submit" class="btn btn-danger" [disabled]="removing">
+              @if (removing) {
+                <i class="bi bi-arrow-repeat spin"></i> Retrait...
+              } @else {
+                <i class="bi bi-check2-circle"></i> Confirmer le retrait
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</div>

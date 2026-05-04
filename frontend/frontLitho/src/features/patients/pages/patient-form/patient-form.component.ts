@@ -83,7 +83,7 @@ export class PatientFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = err.status === 404 ? 'Patient not found.' : 'Failed to load patient.';
+        this.error = err.status === 404 ? 'Patient introuvable.' : 'Échec du chargement du patient.';
         this.loading = false;
       }
     });
@@ -265,13 +265,13 @@ export class PatientFormComponent implements OnInit {
     this.saving = false;
     if (err.status === 400 && err.error?.errors) {
       this.fieldErrors = err.error.errors;
-      this.error = 'Please fix the validation errors below.';
+      this.error = 'Veuillez corriger les erreurs de validation ci-dessous.';
     } else if (err.status === 409) {
-      this.error = err.error?.detail || 'A patient with this DI or DMI already exists.';
+      this.error = err.error?.detail || 'Un patient avec ce DI ou ce DMI existe déjà.';
     } else if (err.status === 403) {
-      this.error = 'You do not have permission to perform this action.';
+      this.error = "Vous n'avez pas l'autorisation d'effectuer cette action.";
     } else {
-      this.error = 'An unexpected error occurred. Please try again.';
+      this.error = 'Une erreur inattendue est survenue. Veuillez réessayer.';
     }
   }
 
@@ -283,8 +283,8 @@ export class PatientFormComponent implements OnInit {
   getError(field: string): string {
     if (this.fieldErrors[field]) return this.fieldErrors[field];
     const ctrl = this.form.get(field);
-    if (ctrl?.hasError('required')) return 'This field is required.';
-    if (ctrl?.hasError('email')) return 'Invalid email address.';
+    if (ctrl?.hasError('required')) return 'Ce champ est obligatoire.';
+    if (ctrl?.hasError('email')) return 'Adresse e-mail invalide.';
     return '';
   }
 }

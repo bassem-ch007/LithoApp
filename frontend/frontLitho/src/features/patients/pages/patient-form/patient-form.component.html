@@ -1,14 +1,14 @@
 <div class="patient-form-page">
   <div class="page-header">
     <a routerLink="/patients" class="back-link">
-      <i class="bi bi-arrow-left"></i> Back to Patients
+      <i class="bi bi-arrow-left"></i> Retour aux patients
     </a>
-    <h1>{{ isEditMode ? 'Edit Patient' : 'New Patient' }}</h1>
+    <h1>{{ isEditMode ? 'Modifier le patient' : 'Nouveau patient' }}</h1>
   </div>
 
   @if (loading) {
     <div class="state-message loading">
-      <i class="bi bi-arrow-repeat spin"></i> Loading patient data...
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des données du patient...
     </div>
   }
 
@@ -22,7 +22,7 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
       <!-- Identity -->
       <section class="form-section">
-        <h2>Identity</h2>
+        <h2>Identité</h2>
         <div class="form-row">
           <div class="form-group">
             <label for="di">DI <span class="required">*</span></label>
@@ -39,42 +39,42 @@
 
       <!-- Personal Info -->
       <section class="form-section">
-        <h2>Personal Information</h2>
+        <h2>Informations personnelles</h2>
         <div class="form-row">
           <div class="form-group">
-            <label for="lastName">Last Name <span class="required">*</span></label>
+            <label for="lastName">Nom <span class="required">*</span></label>
             <input id="lastName" type="text" formControlName="lastName" [class.invalid]="hasError('lastName')" />
             @if (hasError('lastName')) { <span class="field-error">{{ getError('lastName') }}</span> }
           </div>
           <div class="form-group">
-            <label for="firstName">First Name <span class="required">*</span></label>
+            <label for="firstName">Prénom <span class="required">*</span></label>
             <input id="firstName" type="text" formControlName="firstName" [class.invalid]="hasError('firstName')" />
             @if (hasError('firstName')) { <span class="field-error">{{ getError('firstName') }}</span> }
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="birthDate">Birth Date <span class="required">*</span></label>
+            <label for="birthDate">Date de naissance <span class="required">*</span></label>
             <input id="birthDate" type="date" formControlName="birthDate" [class.invalid]="hasError('birthDate')" />
             @if (hasError('birthDate')) { <span class="field-error">{{ getError('birthDate') }}</span> }
           </div>
           <div class="form-group">
-            <label for="gender">Gender <span class="required">*</span></label>
+            <label for="gender">Sexe <span class="required">*</span></label>
             <select id="gender" formControlName="gender" [class.invalid]="hasError('gender')">
-              <option value="">Select gender</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
+              <option value="">Sélectionner le sexe</option>
+              <option value="MALE">Homme</option>
+              <option value="FEMALE">Femme</option>
             </select>
             @if (hasError('gender')) { <span class="field-error">{{ getError('gender') }}</span> }
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="height">Height (cm)</label>
+            <label for="height">Taille (cm)</label>
             <input id="height" type="number" formControlName="height" min="0" step="0.1" />
           </div>
           <div class="form-group">
-            <label for="weight">Weight (kg)</label>
+            <label for="weight">Poids (kg)</label>
             <input id="weight" type="number" formControlName="weight" min="0" step="0.1" />
           </div>
         </div>
@@ -85,18 +85,18 @@
         <h2>Contact</h2>
         <div class="form-row">
           <div class="form-group">
-            <label for="phone">Phone</label>
+            <label for="phone">Téléphone</label>
             <input id="phone" type="tel" formControlName="phone" />
           </div>
           <div class="form-group">
-            <label for="email">Email</label>
+            <label for="email">E-mail</label>
             <input id="email" type="email" formControlName="email" [class.invalid]="hasError('email')" />
             @if (hasError('email')) { <span class="field-error">{{ getError('email') }}</span> }
           </div>
         </div>
         <div class="form-row">
           <div class="form-group full-width">
-            <label for="address">Address</label>
+            <label for="address">Adresse</label>
             <input id="address" type="text" formControlName="address" />
           </div>
         </div>
@@ -104,44 +104,44 @@
 
       <!-- Clinical Info -->
       <section class="form-section">
-        <h2>Clinical Information</h2>
+        <h2>Données cliniques</h2>
         <div class="form-row">
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="familyHistory" /> Family History of Lithiasis</label>
+            <label><input type="checkbox" formControlName="familyHistory" /> Antécédents familiaux de lithiase</label>
           </div>
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="personalHistory" /> Personal History of Lithiasis</label>
+            <label><input type="checkbox" formControlName="personalHistory" /> Antécédents personnels de lithiase</label>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="lastEpisodeDate">Last Episode Date</label>
+            <label for="lastEpisodeDate">Date du dernier épisode</label>
             <input id="lastEpisodeDate" type="date" formControlName="lastEpisodeDate" />
           </div>
           <div class="form-group">
-            <label for="lithiasisType">Lithiasis Type</label>
-            <input id="lithiasisType" type="text" formControlName="lithiasisType" placeholder="e.g., Calcium oxalate" />
+            <label for="lithiasisType">Type de lithiase</label>
+            <input id="lithiasisType" type="text" formControlName="lithiasisType" placeholder="ex. oxalate de calcium" />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="frequentInfections" /> Frequent Urinary Infections</label>
+            <label><input type="checkbox" formControlName="frequentInfections" /> Infections urinaires fréquentes</label>
           </div>
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="singleKidney" /> Single Kidney</label>
+            <label><input type="checkbox" formControlName="singleKidney" /> Rein unique</label>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="kidneyType">Kidney Type</label>
+            <label for="kidneyType">Type de rein</label>
             <select id="kidneyType" formControlName="kidneyType">
-              <option [ngValue]="null">Not specified</option>
-              <option value="ANATOMICAL">Anatomical</option>
-              <option value="FUNCTIONAL">Functional</option>
+              <option [ngValue]="null">Non précisé</option>
+              <option value="ANATOMICAL">Anatomique</option>
+              <option value="FUNCTIONAL">Fonctionnel</option>
             </select>
           </div>
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="chronicRenalFailure" /> Chronic Renal Failure</label>
+            <label><input type="checkbox" formControlName="chronicRenalFailure" /> Insuffisance rénale chronique</label>
           </div>
         </div>
         <div class="form-row">
@@ -154,16 +154,16 @@
 
       <!-- Medication -->
       <section class="form-section">
-        <h2>Medication</h2>
+        <h2>Médicaments</h2>
         <div class="form-row">
           <div class="form-group checkbox-group">
-            <label><input type="checkbox" formControlName="hasMedication" /> Patient takes medication</label>
+            <label><input type="checkbox" formControlName="hasMedication" /> Le patient prend un traitement</label>
           </div>
         </div>
         @if (form.value.hasMedication) {
           <div class="form-row">
             <div class="form-group full-width">
-              <label for="medicationDescription">Medication Details</label>
+              <label for="medicationDescription">Détails du traitement</label>
               <textarea id="medicationDescription" formControlName="medicationDescription" rows="3"></textarea>
             </div>
           </div>
@@ -172,66 +172,66 @@
 
       <!-- Associated Diseases -->
       <section class="form-section">
-        <h2>Associated Diseases</h2>
+        <h2>Maladies associées</h2>
         <div class="list-editor" formArrayName="associatedDiseases">
           @for (ctrl of associatedDiseases.controls; track $index; let i = $index) {
             <div class="list-item">
-              <input type="text" [formControlName]="i" placeholder="Disease name" />
+              <input type="text" [formControlName]="i" placeholder="Nom de la maladie" />
               <button type="button" class="btn-remove" (click)="removeListItem('associatedDiseases', i)">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
           }
           <button type="button" class="btn btn-add" (click)="addListItem('associatedDiseases')">
-            <i class="bi bi-plus"></i> Add Disease
+            <i class="bi bi-plus"></i> Ajouter une maladie
           </button>
         </div>
       </section>
 
       <!-- Genetic Diseases -->
       <section class="form-section">
-        <h2>Genetic Diseases</h2>
+        <h2>Maladies génétiques</h2>
         <div class="list-editor" formArrayName="geneticDiseases">
           @for (ctrl of geneticDiseases.controls; track $index; let i = $index) {
             <div class="list-item">
-              <input type="text" [formControlName]="i" placeholder="Genetic disease name" />
+              <input type="text" [formControlName]="i" placeholder="Nom de la maladie génétique" />
               <button type="button" class="btn-remove" (click)="removeListItem('geneticDiseases', i)">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
           }
           <button type="button" class="btn btn-add" (click)="addListItem('geneticDiseases')">
-            <i class="bi bi-plus"></i> Add Genetic Disease
+            <i class="bi bi-plus"></i> Ajouter une maladie génétique
           </button>
         </div>
       </section>
 
       <!-- Anatomical Anomalies -->
       <section class="form-section">
-        <h2>Anatomical Anomalies</h2>
+        <h2>Anomalies anatomiques</h2>
         <div class="list-editor" formArrayName="anatomicalAnomalies">
           @for (ctrl of anatomicalAnomalies.controls; track $index; let i = $index) {
             <div class="list-item">
-              <input type="text" [formControlName]="i" placeholder="Anomaly name" />
+              <input type="text" [formControlName]="i" placeholder="Nom de l'anomalie" />
               <button type="button" class="btn-remove" (click)="removeListItem('anatomicalAnomalies', i)">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
           }
           <button type="button" class="btn btn-add" (click)="addListItem('anatomicalAnomalies')">
-            <i class="bi bi-plus"></i> Add Anomaly
+            <i class="bi bi-plus"></i> Ajouter une anomalie
           </button>
         </div>
       </section>
 
       <!-- Actions -->
       <div class="form-actions">
-        <a routerLink="/patients" class="btn btn-cancel">Cancel</a>
+        <a routerLink="/patients" class="btn btn-cancel">Annuler</a>
         <button type="submit" class="btn btn-primary" [disabled]="saving">
           @if (saving) {
-            <i class="bi bi-arrow-repeat spin"></i> Saving...
+            <i class="bi bi-arrow-repeat spin"></i> Enregistrement...
           } @else {
-            <i class="bi bi-check-lg"></i> {{ isEditMode ? 'Update Patient' : 'Create Patient' }}
+            <i class="bi bi-check-lg"></i> {{ isEditMode ? 'Modifier le patient' : 'Créer le patient' }}
           }
         </button>
       </div>

@@ -119,11 +119,11 @@ export class AuthService {
     }
 
     if (role === 'UROLOGUE') {
-      return this.router.navigateByUrl('/urologist/dashboard');
+      return this.router.navigateByUrl('/patients');
     }
 
     if (role === 'BIOLOGIST') {
-      return this.router.navigateByUrl('/biologist/dashboard');
+      return this.router.navigateByUrl('/analysis-search');
     }
 
     return this.router.navigateByUrl('/pending-approval');

@@ -1,0 +1,110 @@
+<div class="drainage-create-page">
+  <div class="page-header">
+    @if (episodeId) {
+      <a [routerLink]="['/episodes', episodeId, 'drainages']" class="back-link">
+        <i class="bi bi-arrow-left"></i> Retour aux drainages
+      </a>
+    }
+    <h1>Nouveau drainage</h1>
+    @if (episode) {
+      <p class="patient-context">
+        <span>Épisode #{{ episode.id }}</span>
+        @if (patient) {
+          <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+          <span>DI {{ patient.di }}</span>
+          <span>DMI {{ patient.dmi }}</span>
+        }
+      </p>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement du contexte de l'épisode...
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
+  }
+
+  @if (!loading && episode) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
+      <section class="form-section">
+        <h2>Dispositif</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="drainageType">Type <span class="required">*</span></label>
+            <select id="drainageType" formControlName="drainageType" [class.invalid]="hasError('drainageType')">
+              @for (t of drainageTypes; track t) {
+                <option [value]="t">{{ typeLabels[t] }}</option>
+              }
+            </select>
+            @if (hasError('drainageType')) { <span class="field-error">{{ getError('drainageType') }}</span> }
+          </div>
+          <div class="form-group">
+            <label for="side">Côté <span class="required">*</span></label>
+            <select id="side" formControlName="side" [class.invalid]="hasError('side')">
+              @for (s of drainageSides; track s) {
+                <option [value]="s">{{ sideLabels[s] }}</option>
+              }
+            </select>
+            @if (hasError('side')) { <span class="field-error">{{ getError('side') }}</span> }
+          </div>
+          @if (isJJ) {
+            <div class="form-group">
+              <label for="jjType">Type de sonde JJ <span class="required">*</span></label>
+              <select id="jjType" formControlName="jjType" [class.invalid]="hasError('jjType')">
+                @for (j of jjTypes; track j) {
+                  <option [value]="j">{{ jjLabels[j] }}</option>
+                }
+              </select>
+              @if (hasError('jjType')) { <span class="field-error">{{ getError('jjType') }}</span> }
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Dates</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="placedAt">Date de pose <span class="required">*</span></label>
+            <input id="placedAt" type="date" formControlName="placedAt" [class.invalid]="hasError('placedAt')" />
+            @if (hasError('placedAt')) { <span class="field-error">{{ getError('placedAt') }}</span> }
+          </div>
+          <div class="form-group">
+            <label for="plannedRemovalDate">Date prévue de retrait</label>
+            <input id="plannedRemovalDate" type="date" formControlName="plannedRemovalDate"
+                   [class.invalid]="hasError('plannedRemovalDate')" />
+            <span class="field-hint">Laisser vide pour laisser le serveur la calculer.</span>
+            @if (hasError('plannedRemovalDate')) { <span class="field-error">{{ getError('plannedRemovalDate') }}</span> }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Notes</h2>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <textarea formControlName="notes" rows="4"
+                      placeholder="Notes cliniques facultatives sur la pose"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="cancel()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          @if (saving) {
+            <i class="bi bi-arrow-repeat spin"></i> Création...
+          } @else {
+            <i class="bi bi-check-lg"></i> Créer le drainage
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -52,8 +52,8 @@ export class PatientListComponent implements OnInit {
       },
       error: (err) => {
         this.error = err.status === 403
-          ? 'You do not have permission to view patients.'
-          : 'Failed to load patients. Please try again.';
+          ? "Vous n'avez pas l'autorisation de consulter les patients."
+          : 'Échec du chargement des patients. Veuillez réessayer.';
         this.loading = false;
       }
     });
@@ -97,5 +97,15 @@ export class PatientListComponent implements OnInit {
 
   formatGender(gender: string): string {
     return gender === 'MALE' ? 'M' : 'F';
+  }
+
+  get searchPlaceholder(): string {
+    const labels = {
+      name: 'nom',
+      di: 'DI',
+      dmi: 'DMI',
+      phone: 'téléphone'
+    };
+    return `Rechercher par ${labels[this.searchField]}...`;
   }
 }

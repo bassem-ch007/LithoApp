@@ -2,7 +2,7 @@
   <div class="page-header">
     <h1>Patients</h1>
     <a routerLink="/patients/new" class="btn btn-primary">
-      <i class="bi bi-plus-lg"></i> New Patient
+      <i class="bi bi-plus-lg"></i> Nouveau patient
     </a>
   </div>
 
@@ -10,10 +10,10 @@
   <div class="search-bar">
     <div class="search-field-select">
       <select [(ngModel)]="searchField" (change)="onSearch()">
-        <option value="name">Name</option>
+        <option value="name">Nom</option>
         <option value="di">DI</option>
         <option value="dmi">DMI</option>
-        <option value="phone">Phone</option>
+        <option value="phone">Téléphone</option>
       </select>
     </div>
     <div class="search-input-wrapper">
@@ -21,23 +21,23 @@
         type="text"
         [(ngModel)]="searchTerm"
         (keyup.enter)="onSearch()"
-        [placeholder]="'Search by ' + searchField + '...'"
+        [placeholder]="searchPlaceholder"
       />
       @if (searchTerm) {
-        <button class="btn-clear" (click)="clearSearch()" title="Clear search">
+        <button class="btn-clear" (click)="clearSearch()" title="Effacer la recherche">
           <i class="bi bi-x-lg"></i>
         </button>
       }
     </div>
     <button class="btn btn-search" (click)="onSearch()">
-      <i class="bi bi-search"></i> Search
+      <i class="bi bi-search"></i> Rechercher
     </button>
   </div>
 
   <!-- Loading -->
   @if (loading) {
     <div class="state-message loading">
-      <i class="bi bi-arrow-repeat spin"></i> Loading patients...
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des patients...
     </div>
   }
 
@@ -45,7 +45,7 @@
   @if (error && !loading) {
     <div class="state-message error">
       <i class="bi bi-exclamation-triangle"></i> {{ error }}
-      <button class="btn btn-sm btn-retry" (click)="loadPatients()">Retry</button>
+      <button class="btn btn-sm btn-retry" (click)="loadPatients()">Réessayer</button>
     </div>
   }
 
@@ -54,12 +54,12 @@
     <div class="state-message empty">
       <i class="bi bi-people"></i>
       @if (searchTerm) {
-        <p>No patients found matching your search.</p>
-        <button class="btn btn-sm btn-retry" (click)="clearSearch()">Clear Search</button>
+        <p>Aucun patient ne correspond à votre recherche.</p>
+        <button class="btn btn-sm btn-retry" (click)="clearSearch()">Effacer la recherche</button>
       } @else {
-        <p>No patients yet. Create your first patient to get started.</p>
+        <p>Aucun patient pour le moment. Créez le premier patient pour commencer.</p>
         <a routerLink="/patients/new" class="btn btn-primary btn-sm">
-          <i class="bi bi-plus-lg"></i> Create Patient
+          <i class="bi bi-plus-lg"></i> Créer un patient
         </a>
       }
     </div>
@@ -73,11 +73,11 @@
           <tr>
             <th>DI</th>
             <th>DMI</th>
-            <th>Last Name</th>
-            <th>First Name</th>
-            <th>Birth Date</th>
-            <th>Gender</th>
-            <th>Phone</th>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Date de naissance</th>
+            <th>Sexe</th>
+            <th>Téléphone</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -96,10 +96,10 @@
               </td>
               <td>{{ patient.phone || '—' }}</td>
               <td class="actions">
-                <button class="btn-icon" title="View details" (click)="viewPatient(patient.id)">
+                <button class="btn-icon" title="Voir les détails" (click)="viewPatient(patient.id)">
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn-icon" title="Edit patient" (click)="editPatient(patient.id)">
+                <button class="btn-icon" title="Modifier le patient" (click)="editPatient(patient.id)">
                   <i class="bi bi-pencil"></i>
                 </button>
               </td>

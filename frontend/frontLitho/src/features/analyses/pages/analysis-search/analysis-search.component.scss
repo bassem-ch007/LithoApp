@@ -1,0 +1,201 @@
+.analysis-search-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1rem;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .subtitle {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0.3rem 0 0;
+  }
+}
+
+.search-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  label {
+    font-size: 0.78rem;
+    color: #475569;
+    font-weight: 500;
+  }
+
+  input, select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: #fff;
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+
+.btn-primary { background: #3b82f6; color: #fff; &:hover:not(:disabled) { background: #2563eb; } }
+.btn-secondary { background: #f1f5f9; color: #475569; &:hover { background: #e2e8f0; } }
+.btn-cancel { background: #f1f5f9; color: #475569; &:hover { background: #e2e8f0; } }
+
+.alert {
+  padding: 0.7rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &.alert-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+}
+
+.state-message {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+
+  i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #94a3b8; }
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.results-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.results-head {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: #f8fafc; }
+    &:last-child { border-bottom: none; }
+  }
+
+  .left { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  .row1 { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .row2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    color: #64748b;
+    font-size: 0.8rem;
+
+    i { color: #94a3b8; margin-right: 0.2rem; }
+  }
+
+  .ar-id {
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+  }
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.16rem 0.55rem;
+  background: #dbeafe;
+  color: #1d4ed8;
+
+  &.stone {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.16rem 0.55rem;
+
+  &.created { background: #fef3c7; color: #92400e; }
+  &.in-progress { background: #dbeafe; color: #1d4ed8; }
+  &.completed { background: #d1fae5; color: #047857; }
+}

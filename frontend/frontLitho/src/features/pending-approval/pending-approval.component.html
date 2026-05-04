@@ -1,14 +1,14 @@
 <section class="pending-approval">
-  <h1>Pending Approval</h1>
+  <h1>Compte en attente d'approbation</h1>
   <p>
-    Your account has been created successfully, but it has not been assigned a role yet.
-    An administrator must validate your account and assign you a role before you can access the platform.
+    Votre compte a bien été créé, mais aucun rôle ne lui a encore été attribué.
+    Un administrateur doit valider votre compte et vous attribuer un rôle avant que vous puissiez accéder à la plateforme.
   </p>
 
   <div class="actions">
-    <button type="button" class="secondary" (click)="logout()">Logout</button>
+    <button type="button" class="secondary" (click)="logout()">Déconnexion</button>
     <button type="button" (click)="checkAgain()" [disabled]="isChecking">
-      {{ isChecking ? 'Checking...' : 'Refresh / Check again' }}
+      {{ isChecking ? 'Vérification...' : 'Actualiser / vérifier à nouveau' }}
     </button>
   </div>
 </section>

@@ -1,0 +1,67 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: notification-service
+
+  # Kafka is optional — exclude auto-config so an empty bootstrap-servers does not fail startup.
+  # When you enable real Kafka delivery, drop this exclusion AND set NOTIFICATION_KAFKA_ENABLED=true.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/medical-platform}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/medical-platform/protocol/openid-connect/certs}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5438/notification_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Kafka is optional. If KAFKA_BOOTSTRAP_SERVERS is not set the consumer bean is not started.
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: com.lithoapp.notification.dto.event
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+    topics:
+      events: ${NOTIFICATION_KAFKA_TOPIC:lithoapp.notifications}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

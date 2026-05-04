@@ -1,0 +1,149 @@
+<div class="analysis-details-page">
+  <div class="page-header">
+    <a [routerLink]="backLink" class="back-link">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+    <div class="header-row">
+      <div>
+        <h1>
+          @if (analysis) {
+            Analyse {{ typeLabel(analysis.type) }} #{{ analysis.id }}
+          } @else {
+            Demande d'analyse
+          }
+        </h1>
+        @if (analysis) {
+          <p class="patient-context">
+            <span>Épisode #{{ analysis.episodeId }}</span>
+            @if (patient) {
+              <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+              <span>DI {{ patient.di }}</span>
+              <span>DMI {{ patient.dmi }}</span>
+              @if (patient.phone) { <span>{{ patient.phone }}</span> }
+            }
+          </p>
+        }
+      </div>
+      @if (analysis) {
+        <div class="header-actions">
+          <span class="status-badge" [ngClass]="statusClass(analysis.status)">{{ statusLabel(analysis.status) }}</span>
+          @if (canComplete) {
+            <button class="btn btn-success" [disabled]="completing" (click)="complete()">
+              @if (completing) {
+                <i class="bi bi-arrow-repeat spin"></i> Finalisation...
+              } @else {
+                <i class="bi bi-check2-circle"></i> Marquer comme terminée
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement de l'analyse...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <button class="btn btn-sm btn-secondary" (click)="loadAll()">Réessayer</button>
+    </div>
+  }
+
+  @if (successMessage) {
+    <div class="alert alert-success">
+      <i class="bi bi-check2-circle"></i> {{ successMessage }}
+    </div>
+  }
+
+  @if (completeError) {
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle"></i> {{ completeError }}
+    </div>
+  }
+
+  @if (analysis && !loading && !error) {
+    <div class="detail-card">
+      <h2><i class="bi bi-info-circle"></i> Informations de la demande</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Type</span>
+          <span class="value">{{ typeLabel(analysis.type) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Statut</span>
+          <span class="value">{{ statusLabel(analysis.status) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Créée par</span>
+          <span class="value">{{ analysis.createdBy }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Créée le</span>
+          <span class="value">{{ analysis.createdAt | date:'medium' }}</span>
+        </div>
+        @if (analysis.completedAt) {
+          <div class="detail-item">
+            <span class="label">Terminée par</span>
+            <span class="value">{{ analysis.completedBy }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Terminée le</span>
+            <span class="value">{{ analysis.completedAt | date:'medium' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h2>
+        @if (analysis.type === 'METABOLIC') {
+          <i class="bi bi-droplet"></i> Résultats métaboliques
+        } @else {
+          <i class="bi bi-gem"></i> Résultats de l'analyse du calcul
+        }
+      </h2>
+
+      @if (analysis.type === 'METABOLIC') {
+        <app-metabolic-panel
+          [analysis]="analysis"
+          [result]="metabolicResult"
+          [canEdit]="canEditMetabolic"
+          (resultChanged)="refreshAfterChange()"
+        ></app-metabolic-panel>
+      } @else {
+        <app-stone-panel
+          [analysis]="analysis"
+          [result]="stoneResult"
+          [canEdit]="canEditStone"
+          (resultChanged)="refreshAfterChange()"
+        ></app-stone-panel>
+      }
+    </div>
+
+    @if (auditLog.length > 0) {
+      <div class="detail-card">
+        <h2><i class="bi bi-clock-history"></i> Journal d'audit ({{ auditLog.length }})</h2>
+        <ul class="audit-list">
+          @for (entry of auditLog; track entry.id) {
+            <li>
+              <span class="audit-action">{{ auditActionLabel(entry.actionType) }}</span>
+              <span class="audit-actor">{{ entry.actorId }}</span>
+              <span class="audit-time">{{ entry.timestamp | date:'medium' }}</span>
+              @if (entry.targetField) {
+                <span class="audit-field">{{ entry.targetField }}</span>
+              }
+              @if (entry.newValue) {
+                <span class="audit-new">→ {{ auditValueLabel(entry.newValue) }}</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+</div>

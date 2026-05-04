@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { EpisodeSummaryResponse } from '../../models/episode.model';
+import { EpisodeStatus, EpisodeSummaryResponse } from '../../models/episode.model';
 import { EpisodeService } from '../../services/episode.service';
 import { PatientResponse } from '../../../patients/models/patient.model';
 import { PatientService } from '../../../patients/services/patient.service';
@@ -36,7 +36,7 @@ export class EpisodeListComponent implements OnInit {
   ngOnInit(): void {
     const patientIdParam = this.route.snapshot.paramMap.get('patientId');
     if (!patientIdParam || Number.isNaN(+patientIdParam)) {
-      this.error = 'Invalid patient route.';
+      this.error = 'Route patient invalide.';
       return;
     }
 
@@ -60,8 +60,8 @@ export class EpisodeListComponent implements OnInit {
       },
       error: (err) => {
         this.error = err.status === 403
-          ? 'You do not have permission to view episodes.'
-          : this.extractErrorMessage(err, 'Failed to load episodes.');
+          ? "Vous n'avez pas l'autorisation de consulter les épisodes."
+          : this.extractErrorMessage(err, 'Échec du chargement des épisodes.');
         this.loading = false;
       }
     });
@@ -107,6 +107,10 @@ export class EpisodeListComponent implements OnInit {
       pages.push(i);
     }
     return pages;
+  }
+
+  statusLabel(status: EpisodeStatus): string {
+    return status === 'CLOSED' ? 'Clôturé' : 'Ouvert';
   }
 
   private extractErrorMessage(err: any, fallback: string): string {

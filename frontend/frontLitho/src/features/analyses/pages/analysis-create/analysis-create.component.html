@@ -1,0 +1,67 @@
+<div class="analysis-create-page">
+  <div class="page-header">
+    @if (episodeId) {
+      <a [routerLink]="['/episodes', episodeId, 'analyses']" class="back-link">
+        <i class="bi bi-arrow-left"></i> Retour aux demandes d'analyses
+      </a>
+    }
+    <h1>Nouvelle demande d'analyse</h1>
+    @if (episode) {
+      <p class="patient-context">
+        <span>Épisode #{{ episode.id }}</span>
+        @if (patient) {
+          <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+          <span>DI {{ patient.di }}</span>
+          <span>DMI {{ patient.dmi }}</span>
+        }
+      </p>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement du contexte de l'épisode...
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
+  }
+
+  @if (!loading && episode) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
+      <section class="form-section">
+        <h2>Choisir le type d'analyse</h2>
+        <div class="type-grid">
+          <button type="button" class="type-card"
+                  [class.selected]="form.value.type === 'METABOLIC'"
+                  (click)="selectType('METABOLIC')">
+            <i class="bi bi-droplet"></i>
+            <span class="type-title">Analyse métabolique</span>
+            <span class="type-desc">Résultats PDF : bilan sanguin, urines du matin, urines de 24h.</span>
+          </button>
+          <button type="button" class="type-card"
+                  [class.selected]="form.value.type === 'STONE'"
+                  (click)="selectType('STONE')">
+            <i class="bi bi-gem"></i>
+            <span class="type-title">Analyse du calcul</span>
+            <span class="type-desc">Morphologie, spectrophotométrie et classification structurées.</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="cancel()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          @if (saving) {
+            <i class="bi bi-arrow-repeat spin"></i> Création...
+          } @else {
+            <i class="bi bi-check-lg"></i> Créer la demande d'analyse
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -123,6 +123,9 @@ public class Drainage {
     @Column(name = "day_of_reminder_sent_at")
     private LocalDateTime dayOfReminderSentAt;
 
+    @Column(name = "overdue_reminder_sent_at")
+    private LocalDateTime overdueReminderSentAt;
+
     // ── Audit ────────────────────────────────────────────────────────────────
 
     @CreationTimestamp

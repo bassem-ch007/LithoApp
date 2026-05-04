@@ -1,0 +1,77 @@
+<div class="metabolic-panel">
+  <div class="summary">
+    <span class="summary-pill">
+      <i class="bi bi-files"></i>
+      {{ result?.uploadedTypesCount ?? 0 }} / {{ documentTypes.length }} type(s) de document téléversé(s)
+    </span>
+    @if (analysis.status === 'COMPLETED') {
+      <span class="readonly-pill"><i class="bi bi-lock"></i> Lecture seule - terminée</span>
+    }
+  </div>
+
+  <div class="slot-grid">
+    @for (type of documentTypes; track type) {
+      <article class="slot-card">
+        <header class="slot-head">
+          <div>
+            <h3>{{ labels[type] }}</h3>
+            <span class="slot-key">{{ type }}</span>
+          </div>
+          @if (getActive(type)) {
+            <span class="badge present"><i class="bi bi-check2-circle"></i> Téléversé</span>
+          } @else {
+            <span class="badge missing"><i class="bi bi-dash-circle"></i> Aucun fichier</span>
+          }
+        </header>
+
+        @if (getActive(type); as doc) {
+          <div class="doc-row">
+            <div class="doc-meta">
+              <span class="filename">{{ doc.originalFilename }}</span>
+              <span class="meta-line">
+                v{{ doc.versionNumber }} &middot; {{ formatSize(doc.fileSizeBytes) }}
+                &middot; {{ doc.uploadedBy }} &middot; {{ doc.uploadedAt | date:'medium' }}
+              </span>
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="download(type)">
+              <i class="bi bi-download"></i> Télécharger
+            </button>
+          </div>
+
+          @if (getVersions(type).length > 1) {
+            <details class="history">
+              <summary>Historique des versions ({{ getVersions(type).length }})</summary>
+              <ul>
+                @for (v of getVersions(type); track v.id) {
+                  <li>
+                    <span class="v-info">v{{ v.versionNumber }} &middot; {{ v.uploadedBy }} &middot; {{ v.uploadedAt | date:'short' }}</span>
+                    <button class="btn-link" (click)="download(type, v.versionNumber)">Télécharger</button>
+                  </li>
+                }
+              </ul>
+            </details>
+          }
+        }
+
+        @if (canEdit) {
+          <div class="upload-row">
+            <label class="btn btn-primary btn-sm" [class.disabled]="getState(type).uploading">
+              @if (getState(type).uploading) {
+                <i class="bi bi-arrow-repeat spin"></i> Téléversement...
+              } @else {
+                <i class="bi bi-upload"></i> {{ getActive(type) ? 'Remplacer le PDF' : 'Téléverser un PDF' }}
+              }
+              <input type="file" accept="application/pdf"
+                     (change)="onFileSelected(type, $event)"
+                     [disabled]="getState(type).uploading" hidden />
+            </label>
+          </div>
+        }
+
+        @if (getState(type).error) {
+          <p class="slot-error"><i class="bi bi-exclamation-triangle"></i> {{ getState(type).error }}</p>
+        }
+      </article>
+    }
+  </div>
+</div>
