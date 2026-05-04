@@ -1,0 +1,55 @@
+name: Docker Compose LAN Demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-lan-demo:
+    name: Deploy LAN ping demo on app-server
+    runs-on: self-hosted
+
+    env:
+      DEMO_DIR: /home/bassem007/lithoapp-deploy/docker-test/lan-demo
+      SERVER_LAN_IP: 192.168.1.13
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare demo directory on server
+        run: |
+          set -euo pipefail
+          mkdir -p "$DEMO_DIR"
+          cp shared/docker/demo/docker-compose.demo.yml "$DEMO_DIR/docker-compose.yml"
+          cp shared/docker/demo/index.html "$DEMO_DIR/index.html"
+
+      - name: Stop old LAN demo if exists
+        run: |
+          set -euo pipefail
+          cd "$DEMO_DIR"
+          docker compose down --remove-orphans || true
+
+      - name: Start LAN demo
+        run: |
+          set -euo pipefail
+          cd "$DEMO_DIR"
+          docker compose up -d
+
+      - name: Show container status
+        run: |
+          set -euo pipefail
+          cd "$DEMO_DIR"
+          docker compose ps
+
+      - name: Test from inside server
+        run: |
+          set -euo pipefail
+          curl -fsS "http://127.0.0.1:8088" | head
+          curl -fsS "http://${SERVER_LAN_IP}:8088" | head || true
+
+      - name: Print LAN test instructions
+        run: |
+          echo "From your Lenovo on the same LAN, test:"
+          echo "ping ${SERVER_LAN_IP}"
+          echo "curl http://${SERVER_LAN_IP}:8088"
+          echo "Browser: http://${SERVER_LAN_IP}:8088"

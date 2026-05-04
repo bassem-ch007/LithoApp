@@ -1,8 +1,8 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://localhost:9090',
+  apiBaseUrl: 'https://api.lithoapp.online',
   keycloak: {
-    url: 'https://your-keycloak-domain.com',
+    url: 'https://auth.lithoapp.online',
     realm: 'medical-platform',
     clientId: 'frontend-client'
   }

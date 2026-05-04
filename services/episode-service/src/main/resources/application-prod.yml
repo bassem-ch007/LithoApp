@@ -1,0 +1,43 @@
+server:
+  port: 8085
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/episode_db}
+    username: ${POSTGRES_USER:${SPRING_DATASOURCE_USERNAME}}
+    password: ${POSTGRES_PASSWORD:${SPRING_DATASOURCE_PASSWORD}}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+patient-service:
+  base-url: ${PATIENT_SERVICE_BASE_URL:http://patient-service:8086}
+
+logging:
+  level:
+    com.lithoapp.episodeservice: INFO
+    org.hibernate.SQL: WARN

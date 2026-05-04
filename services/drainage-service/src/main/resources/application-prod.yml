@@ -1,0 +1,48 @@
+server:
+  port: 8084
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/drainage_db}
+    username: ${POSTGRES_USER:${SPRING_DATASOURCE_USERNAME}}
+    password: ${POSTGRES_PASSWORD:${SPRING_DATASOURCE_PASSWORD}}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+drainage:
+  reminder:
+    days-before: ${DRAINAGE_REMINDER_DAYS_BEFORE:3}
+
+patient-service:
+  base-url: ${PATIENT_SERVICE_BASE_URL:http://patient-service:8086}
+episode-service:
+  base-url: ${EPISODE_SERVICE_BASE_URL:http://episode-service:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.lithoapp.drainage: INFO
+    org.hibernate.SQL: WARN

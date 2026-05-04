@@ -1,0 +1,23 @@
+name: Runner Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Check runner machine
+        run: |
+          hostname
+          whoami
+          pwd
+
+      - name: Check Docker access
+        run: docker ps
+
+      - name: Check Kubernetes access
+        run: |
+          kubectl get nodes
+          kubectl get pods -A

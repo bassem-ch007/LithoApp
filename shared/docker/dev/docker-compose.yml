@@ -1,0 +1,326 @@
+name: lithoapp-dev
+
+services:
+  patient-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lithoapp_patients
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - patient-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  episode-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: episode_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - episode-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  analysis-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bilan_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - analysis-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  drainage-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: drainage_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - drainage-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  notification-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.6
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: lithoapp
+      KEYCLOAK_ADMIN_PASSWORD: bassemsofien
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../keycloak/realm/medical-platform-realm.json:/opt/keycloak/data/import/medical-platform-realm.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - lithoapp
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - lithoapp
+
+  patient-service:
+    image: lithoapp/patient-service:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/patient-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/lithoapp_patients
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+    depends_on:
+      patient-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  episode-service:
+    image: lithoapp/episode-service:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/episode-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://episode-db:5432/episode_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+    depends_on:
+      episode-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  analysis-service:
+    image: lithoapp/analysis-service:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/analysis-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://analysis-db:5432/bilan_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8087
+      STORAGE_TYPE: minio
+      STORAGE_MINIO_ENDPOINT: http://minio:9000
+      STORAGE_MINIO_ACCESS_KEY: minioadmin
+      STORAGE_MINIO_SECRET_KEY: minioadmin
+      STORAGE_MINIO_BUCKET: analysis-pdfs
+    depends_on:
+      analysis-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      minio:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  drainage-service:
+    image: lithoapp/drainage-service:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/drainage-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://drainage-db:5432/drainage_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8086
+      EPISODE_SERVICE_BASE_URL: http://episode-service:8085
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8087
+      DRAINAGE_REMINDER_DAYS_BEFORE: "3"
+    depends_on:
+      drainage-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  notification-service:
+    image: lithoapp/notification-service:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/notification-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+    ports:
+      - "8087:8087"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  api-gateway:
+    image: lithoapp/api-gateway:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/api-gateway/Dockerfile
+    environment:
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/medical-platform
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/medical-platform/protocol/openid-connect/certs
+      PATIENT_SERVICE_URI: http://patient-service:8086
+      EPISODE_SERVICE_URI: http://episode-service:8085
+      ANALYSIS_SERVICE_URI: http://analysis-service:8082
+      DRAINAGE_SERVICE_URI: http://drainage-service:8084
+      NOTIFICATION_SERVICE_URI: http://notification-service:8087
+    ports:
+      - "9090:9090"
+    depends_on:
+      keycloak:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+      analysis-service:
+        condition: service_started
+      drainage-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  frontend:
+    image: lithoapp/frontend:dev
+    build:
+      context: ../../..
+      dockerfile: shared/docker/dev/frontend/Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+networks:
+  lithoapp:
+    driver: bridge
+
+volumes:
+  patient-db-data:
+  episode-db-data:
+  analysis-db-data:
+  drainage-db-data:
+  notification-db-data:
+  keycloak-db-data:
+  minio-data:

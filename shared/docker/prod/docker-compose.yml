@@ -1,0 +1,294 @@
+name: lithoapp-prod
+
+services:
+  patient-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PATIENT_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - patient-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  episode-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${EPISODE_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - episode-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  analysis-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${ANALYSIS_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - analysis-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  drainage-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DRAINAGE_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - drainage-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_DB_NAME}
+      POSTGRES_USER: ${KC_DB_USERNAME}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - lithoapp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.6
+    command: ["start", "--import-realm", "--http-enabled=true", "--hostname-strict=false"]
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL}
+      KC_PROXY_HEADERS: xforwarded
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    volumes:
+      - ../keycloak/realm/medical-platform-realm.json:/opt/keycloak/data/import/medical-platform-realm.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - lithoapp
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - lithoapp
+
+  patient-service:
+    image: lithoapp/patient-service:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/patient-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${PATIENT_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      EPISODE_SERVICE_BASE_URL: ${EPISODE_SERVICE_BASE_URL}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+    depends_on:
+      patient-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  episode-service:
+    image: lithoapp/episode-service:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/episode-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${EPISODE_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      PATIENT_SERVICE_BASE_URL: ${PATIENT_SERVICE_BASE_URL}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+    depends_on:
+      episode-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  analysis-service:
+    image: lithoapp/analysis-service:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/analysis-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${ANALYSIS_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      PATIENT_SERVICE_BASE_URL: ${PATIENT_SERVICE_BASE_URL}
+      EPISODE_SERVICE_BASE_URL: ${EPISODE_SERVICE_BASE_URL}
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      STORAGE_MINIO_ENDPOINT: ${STORAGE_MINIO_ENDPOINT}
+      STORAGE_MINIO_ACCESS_KEY: ${STORAGE_MINIO_ACCESS_KEY}
+      STORAGE_MINIO_SECRET_KEY: ${STORAGE_MINIO_SECRET_KEY}
+      STORAGE_MINIO_BUCKET: ${STORAGE_MINIO_BUCKET}
+      STORAGE_LOCAL_BASE_PATH: ${STORAGE_LOCAL_BASE_PATH}
+      ANALYSIS_UPLOAD_MAX_PDF_SIZE_MB: ${ANALYSIS_UPLOAD_MAX_PDF_SIZE_MB}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+    depends_on:
+      analysis-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      minio:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  drainage-service:
+    image: lithoapp/drainage-service:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/drainage-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${DRAINAGE_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      PATIENT_SERVICE_BASE_URL: ${PATIENT_SERVICE_BASE_URL}
+      EPISODE_SERVICE_BASE_URL: ${EPISODE_SERVICE_BASE_URL}
+      DRAINAGE_REMINDER_DAYS_BEFORE: ${DRAINAGE_REMINDER_DAYS_BEFORE}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+    depends_on:
+      drainage-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  api-gateway:
+    image: lithoapp/api-gateway:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/api-gateway/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      FRONTEND_ALLOWED_ORIGIN: ${FRONTEND_ALLOWED_ORIGIN}
+      PATIENT_SERVICE_URI: ${PATIENT_SERVICE_URI}
+      EPISODE_SERVICE_URI: ${EPISODE_SERVICE_URI}
+      ANALYSIS_SERVICE_URI: ${ANALYSIS_SERVICE_URI}
+      DRAINAGE_SERVICE_URI: ${DRAINAGE_SERVICE_URI}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+    ports:
+      - "${API_GATEWAY_PORT}:9090"
+    depends_on:
+      keycloak:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      episode-service:
+        condition: service_started
+      analysis-service:
+        condition: service_started
+      drainage-service:
+        condition: service_started
+    networks:
+      - lithoapp
+
+  frontend:
+    image: lithoapp/frontend:prod
+    build:
+      context: ../../..
+      dockerfile: shared/docker/prod/frontend/Dockerfile
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    networks:
+      - lithoapp
+
+networks:
+  lithoapp:
+    driver: bridge
+
+volumes:
+  patient-db-data:
+  episode-db-data:
+  analysis-db-data:
+  drainage-db-data:
+  keycloak-db-data:
+  minio-data:
