@@ -7,24 +7,31 @@
 
     <nav class="nav">
       @if (authService.isUrologue()) {
-        <a routerLink="/urologist/dashboard" routerLinkActive="active">Dashboard</a>
         <a routerLink="/patients" routerLinkActive="active">Patients</a>
-        <a routerLink="/analysis-requests" routerLinkActive="active">Analysis Requests</a>
-        <a routerLink="/drainage" routerLinkActive="active">Drainage / JJ</a>
+        <a routerLink="/drainage" routerLinkActive="active">Drainage / Sonde JJ</a>
       }
 
       @if (authService.isBiologist()) {
-        <a routerLink="/biologist/dashboard" routerLinkActive="active">Dashboard</a>
-        <a routerLink="/analysis-search" routerLinkActive="active">Analysis Search</a>
-        <a routerLink="/analysis-results" routerLinkActive="active">Analysis Requests / Results</a>
+        <a routerLink="/analysis-search" routerLinkActive="active">Demandes d'analyses</a>
       }
 
       @if (authService.isAdmin()) {
-        <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/admin/dashboard" routerLinkActive="active">Tableau de bord</a>
+      }
+
+      @if (authService.hasAppRole()) {
+        <a routerLink="/notifications" routerLinkActive="active" class="nav-with-badge">
+          <span>Notifications</span>
+          @if ((notificationService.unreadCount | async); as unread) {
+            @if (unread > 0) {
+              <span class="badge">{{ unread }}</span>
+            }
+          }
+        </a>
       }
 
       @if (!authService.hasAppRole()) {
-        <a routerLink="/pending-approval" routerLinkActive="active">Pending Approval</a>
+        <a routerLink="/pending-approval" routerLinkActive="active">En attente d'approbation</a>
       }
     </nav>
   </aside>
@@ -38,7 +45,7 @@
         <span>{{ authService.getEmail() }}</span>
       </div>
 
-      <button class="logout-btn" (click)="logout()">Logout</button>
+      <button class="logout-btn" (click)="logout()">Déconnexion</button>
     </header>
 
     <!-- PAGE CONTENT -->

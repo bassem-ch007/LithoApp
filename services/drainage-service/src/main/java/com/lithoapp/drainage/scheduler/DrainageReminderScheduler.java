@@ -2,6 +2,7 @@ package com.lithoapp.drainage.scheduler;
 
 import com.lithoapp.drainage.entity.Drainage;
 import com.lithoapp.drainage.enums.DrainageStatus;
+import com.lithoapp.drainage.notification.NotificationPublisher;
 import com.lithoapp.drainage.repository.DrainageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,15 +16,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Runs daily to detect drainages that are approaching their planned removal date.
+ * Runs daily to detect drainages that:
+ *  - approach their planned removal date (pre-reminder, configurable lead-time),
+ *  - reach their planned removal date (day-of reminder),
+ *  - have passed their planned removal date (overdue).
  *
- * Current behaviour: logs only — no real notifications are sent.
- *
- * Future extension points:
- *  - Inject a NotificationClient (Feign) and replace the log.info calls
- *    with actual HTTP calls to the Notification Service.
- *  - Alternatively, publish a domain event to Kafka so the
- *    Notification Service can consume it asynchronously.
+ * Each detected drainage produces a notification event toward
+ * notification-service through {@link NotificationPublisher}. The "*-SentAt"
+ * columns guarantee one notification per phase, per drainage.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,92 +31,64 @@ import java.util.List;
 public class DrainageReminderScheduler {
 
     private final DrainageRepository drainageRepository;
+    private final NotificationPublisher notificationPublisher;
 
-    /**
-     * Configurable lead-time (days before planned removal) for the pre-reminder.
-     * Default: 3 days. Override in application.yml via drainage.reminder.days-before.
-     */
     @Value("${drainage.reminder.days-before:3}")
     private int daysBefore;
 
-    /**
-     * Runs every day at 08:00 (server time).
-     * Cron: second minute hour day month weekday
-     */
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "${drainage.reminder.cron:0 0 8 * * *}")
     @Transactional
     public void checkReminders() {
         log.info("[DrainageScheduler] Running daily reminder check (daysBefore={})", daysBefore);
 
         LocalDate today = LocalDate.now();
-        LocalDate preReminderTarget = today.plusDays(daysBefore);
-
-        sendPreReminders(preReminderTarget);
+        sendPreReminders(today.plusDays(daysBefore));
         sendDayOfReminders(today);
+        sendOverdueReminders(today);
     }
-
-    // ── Pre-reminders (X days before planned removal) ─────────────────────────
 
     private void sendPreReminders(LocalDate targetDate) {
         List<Drainage> drainages = drainageRepository
                 .findByStatusAndPlannedRemovalDateAndPreReminderSentAtIsNull(
                         DrainageStatus.ACTIVE, targetDate);
 
-        if (drainages.isEmpty()) {
-            log.debug("[DrainageScheduler] No pre-reminders to send for {}", targetDate);
-            return;
-        }
+        if (drainages.isEmpty()) return;
 
         for (Drainage drainage : drainages) {
-            // TODO: replace with NotificationClient.sendPreReminder(drainage)
-            log.info(
-                "[NOTIFICATION - PRE-REMINDER] Drainage id={} | episode={} | patient={} " +
-                "| type={} | side={} | planned removal in {} days ({})",
-                drainage.getId(),
-                drainage.getEpisodeId(),
-                drainage.getPatientId(),
-                drainage.getDrainageType(),
-                drainage.getSide(),
-                daysBefore,
-                targetDate
-            );
-
+            notificationPublisher.drainageRemovalSoon(drainage, daysBefore);
             drainage.setPreReminderSentAt(LocalDateTime.now());
             drainageRepository.save(drainage);
         }
-
-        log.info("[DrainageScheduler] Pre-reminders logged for {} drainage(s)", drainages.size());
+        log.info("[DrainageScheduler] Pre-reminders dispatched for {} drainage(s)", drainages.size());
     }
-
-    // ── Day-of reminders (removal date = today) ───────────────────────────────
 
     private void sendDayOfReminders(LocalDate today) {
         List<Drainage> drainages = drainageRepository
                 .findByStatusAndPlannedRemovalDateAndDayOfReminderSentAtIsNull(
                         DrainageStatus.ACTIVE, today);
 
-        if (drainages.isEmpty()) {
-            log.debug("[DrainageScheduler] No day-of reminders to send for {}", today);
-            return;
-        }
+        if (drainages.isEmpty()) return;
 
         for (Drainage drainage : drainages) {
-            // TODO: replace with NotificationClient.sendDayOfReminder(drainage)
-            log.info(
-                "[NOTIFICATION - DAY-OF REMINDER] Drainage id={} | episode={} | patient={} " +
-                "| type={} | side={} | planned removal is TODAY ({})",
-                drainage.getId(),
-                drainage.getEpisodeId(),
-                drainage.getPatientId(),
-                drainage.getDrainageType(),
-                drainage.getSide(),
-                today
-            );
-
+            notificationPublisher.drainageRemovalSoon(drainage, 0);
             drainage.setDayOfReminderSentAt(LocalDateTime.now());
             drainageRepository.save(drainage);
         }
+        log.info("[DrainageScheduler] Day-of reminders dispatched for {} drainage(s)", drainages.size());
+    }
 
-        log.info("[DrainageScheduler] Day-of reminders logged for {} drainage(s)", drainages.size());
+    private void sendOverdueReminders(LocalDate today) {
+        List<Drainage> drainages = drainageRepository
+                .findByStatusAndPlannedRemovalDateBeforeAndOverdueReminderSentAtIsNull(
+                        DrainageStatus.ACTIVE, today);
+
+        if (drainages.isEmpty()) return;
+
+        for (Drainage drainage : drainages) {
+            notificationPublisher.drainageOverdue(drainage);
+            drainage.setOverdueReminderSentAt(LocalDateTime.now());
+            drainageRepository.save(drainage);
+        }
+        log.info("[DrainageScheduler] Overdue reminders dispatched for {} drainage(s)", drainages.size());
     }
 }

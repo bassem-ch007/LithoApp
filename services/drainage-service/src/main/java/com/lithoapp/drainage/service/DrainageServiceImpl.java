@@ -9,6 +9,7 @@ import com.lithoapp.drainage.exception.DrainageNotFoundException;
 import com.lithoapp.drainage.exception.DuplicateActiveDrainageException;
 import com.lithoapp.drainage.exception.InvalidDrainageStateException;
 import com.lithoapp.drainage.mapper.DrainageMapper;
+import com.lithoapp.drainage.notification.NotificationPublisher;
 import com.lithoapp.drainage.repository.DrainageRepository;
 import com.lithoapp.drainage.repository.DrainageSpecification;
 import com.lithoapp.drainage.security.CurrentUserProvider;
@@ -40,6 +41,7 @@ public class DrainageServiceImpl implements DrainageService {
     private final PatientValidationService patientValidationService;
 
     private final CurrentUserProvider currentUserProvider;
+    private final NotificationPublisher notificationPublisher;
 
     // ── Create ────────────────────────────────────────────────────────────────
 
@@ -81,6 +83,8 @@ public class DrainageServiceImpl implements DrainageService {
         log.info("Created drainage [id={}, episode={}, patient={}, type={}, side={}, plannedRemoval={}, createdBy={}]",
                 saved.getId(), saved.getEpisodeId(), saved.getPatientId(),
                 saved.getDrainageType(), saved.getSide(), saved.getPlannedRemovalDate(), actor);
+
+        notificationPublisher.drainageCreated(saved);
 
         return drainageMapper.toResponse(saved);
     }
@@ -133,6 +137,7 @@ public class DrainageServiceImpl implements DrainageService {
 
         Drainage saved = drainageRepository.save(drainage);
         log.info("Removed drainage [id={}] on {}", saved.getId(), saved.getRemovedAt());
+        notificationPublisher.drainageRemoved(saved);
         return drainageMapper.toResponse(saved);
     }
 

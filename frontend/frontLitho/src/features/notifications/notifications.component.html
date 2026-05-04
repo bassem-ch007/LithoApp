@@ -1,1 +1,46 @@
-<p>notifications works!</p>
+<div class="notifications-page">
+  <header class="header">
+    <h1>Notifications</h1>
+    <div class="actions">
+      <button class="secondary" (click)="refresh()" [disabled]="loading">Actualiser</button>
+      <button class="primary" (click)="markAllAsRead()" [disabled]="loading || !notifications.length">
+        Tout marquer comme lu
+      </button>
+    </div>
+  </header>
+
+  @if (loading) {
+    <div class="state">Chargement…</div>
+  } @else if (error) {
+    <div class="state error">{{ error }}</div>
+  } @else if (!notifications.length) {
+    <div class="state empty">Aucune notification</div>
+  } @else {
+    <ul class="list">
+      @for (n of notifications; track trackById($index, n)) {
+        <li
+          class="item"
+          [class.unread]="n.status !== 'READ'"
+          (click)="onClick(n)">
+          <div class="meta">
+            <span class="type">{{ typeLabels[n.type] || n.type }}</span>
+            <span class="status-pill" [class.unread]="n.status !== 'READ'">
+              {{ n.status === 'READ' ? 'Lue' : 'Non lue' }}
+            </span>
+          </div>
+          <div class="title">{{ n.title }}</div>
+          <div class="message">{{ n.message }}</div>
+          <div class="footer">
+            <span class="date">{{ n.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <nav class="pagination">
+      <button (click)="prevPage()" [disabled]="page === 0">Précédent</button>
+      <span>Page {{ page + 1 }} / {{ totalPages || 1 }} — {{ totalElements }} notification(s)</span>
+      <button (click)="nextPage()" [disabled]="page + 1 >= totalPages">Suivant</button>
+    </nav>
+  }
+</div>

@@ -1,0 +1,89 @@
+<div class="analysis-search-page">
+  <div class="page-header">
+    <h1>Recherche des demandes d'analyses</h1>
+    <p class="subtitle">Rechercher des demandes d'analyses par identité du patient (DI, DMI, nom, téléphone).</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="search()" class="search-card">
+    <div class="grid">
+      <div class="form-group">
+        <label>DI</label>
+        <input type="text" formControlName="di" placeholder="Dossier d'Identité" />
+      </div>
+      <div class="form-group">
+        <label>DMI</label>
+        <input type="text" formControlName="dmi" placeholder="Dossier Médical Informatisé" />
+      </div>
+      <div class="form-group">
+        <label>Nom du patient</label>
+        <input type="text" formControlName="name" placeholder="Prénom ou nom" />
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="text" formControlName="phone" placeholder="Numéro de téléphone" />
+      </div>
+      <div class="form-group">
+        <label>Statut</label>
+        <select formControlName="status">
+          <option value="">Tous</option>
+          <option value="CREATED">Créée</option>
+          <option value="IN_PROGRESS">En cours</option>
+          <option value="COMPLETED">Terminée</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-cancel" (click)="reset()">Réinitialiser</button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        @if (loading) {
+          <i class="bi bi-arrow-repeat spin"></i> Recherche...
+        } @else {
+          <i class="bi bi-search"></i> Rechercher
+        }
+      </button>
+    </div>
+  </form>
+
+  @if (error) {
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
+  }
+
+  @if (searched && !loading && !error && results.length === 0) {
+    <div class="state-message empty">
+      <i class="bi bi-search"></i>
+      <p>Aucune demande d'analyse ne correspond à votre recherche.</p>
+    </div>
+  }
+
+  @if (results.length > 0) {
+    <div class="results-card">
+      <div class="results-head">
+        <span>{{ results.length }} résultat(s)</span>
+      </div>
+      <ul class="results-list">
+        @for (a of results; track a.id) {
+          <li (click)="open(a)">
+            <div class="left">
+              <div class="row1">
+                <span class="type-badge" [class.stone]="a.type === 'STONE'">{{ typeLabel(a.type) }}</span>
+                <span class="status-badge" [ngClass]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+                <span class="ar-id">#{{ a.id }}</span>
+              </div>
+              <div class="row2">
+                <span><i class="bi bi-folder2-open"></i> Épisode #{{ a.episodeId }}</span>
+                <span><i class="bi bi-person"></i> Patient #{{ a.patientId }}</span>
+                <span><i class="bi bi-clock"></i> {{ a.createdAt | date:'medium' }}</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="open(a); $event.stopPropagation()">
+              <i class="bi bi-arrow-right"></i> Ouvrir
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</div>

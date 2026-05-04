@@ -42,7 +42,7 @@ export class EpisodeFormComponent implements OnInit {
       this.isEditMode = true;
       this.episodeId = +episodeIdParam;
       if (Number.isNaN(this.episodeId)) {
-        this.error = 'Invalid episode route.';
+        this.error = "Route d'épisode invalide.";
         return;
       }
       this.loadEpisode();
@@ -51,7 +51,7 @@ export class EpisodeFormComponent implements OnInit {
 
     const patientIdParam = this.route.snapshot.paramMap.get('patientId');
     if (!patientIdParam || Number.isNaN(+patientIdParam)) {
-      this.error = 'Invalid patient route.';
+      this.error = 'Route patient invalide.';
       return;
     }
 
@@ -93,11 +93,11 @@ export class EpisodeFormComponent implements OnInit {
       },
       error: (err) => {
         if (err.status === 404) {
-          this.error = 'Episode not found.';
+          this.error = 'Épisode introuvable.';
         } else if (err.status === 403) {
-          this.error = 'You do not have permission to edit this episode.';
+          this.error = "Vous n'avez pas l'autorisation de modifier cet épisode.";
         } else {
-          this.error = err.error?.message || 'Failed to load episode.';
+          this.error = err.error?.message || "Échec du chargement de l'épisode.";
         }
         this.loading = false;
       }
@@ -114,7 +114,7 @@ export class EpisodeFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = err.status === 404 ? 'Patient not found.' : 'Failed to load patient context.';
+        this.error = err.status === 404 ? 'Patient introuvable.' : 'Échec du chargement du contexte patient.';
         this.loading = false;
       }
     });
@@ -204,10 +204,10 @@ export class EpisodeFormComponent implements OnInit {
   getError(field: string): string {
     if (this.fieldErrors[field]) return this.fieldErrors[field];
     const ctrl = this.form.get(field);
-    if (ctrl?.hasError('required')) return 'This field is required.';
+    if (ctrl?.hasError('required')) return 'Ce champ est obligatoire.';
     if (ctrl?.hasError('maxlength')) {
       const max = ctrl.errors?.['maxlength']?.requiredLength;
-      return `Must not exceed ${max} characters.`;
+      return `Ne doit pas dépasser ${max} caractères.`;
     }
     return '';
   }
@@ -217,13 +217,13 @@ export class EpisodeFormComponent implements OnInit {
     const validationErrors = err.error?.fieldErrors || err.error?.errors;
     if (err.status === 400 && validationErrors) {
       this.fieldErrors = validationErrors;
-      this.error = 'Please fix the validation errors below.';
+      this.error = 'Veuillez corriger les erreurs de validation ci-dessous.';
     } else if (err.status === 403) {
       this.error = this.isEditMode
-        ? 'You do not have permission to update episodes.'
-        : 'You do not have permission to create episodes.';
+        ? "Vous n'avez pas l'autorisation de modifier les épisodes."
+        : "Vous n'avez pas l'autorisation de créer des épisodes.";
     } else {
-      this.error = err.error?.message || err.error?.detail || 'An unexpected error occurred. Please try again.';
+      this.error = err.error?.message || err.error?.detail || 'Une erreur inattendue est survenue. Veuillez réessayer.';
     }
   }
 

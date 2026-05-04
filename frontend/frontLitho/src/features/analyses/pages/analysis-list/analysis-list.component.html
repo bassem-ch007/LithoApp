@@ -1,0 +1,93 @@
+<div class="analysis-list-page">
+  <div class="page-header">
+    @if (episodeId) {
+      <a [routerLink]="['/episodes', episodeId]" class="back-link">
+        <i class="bi bi-arrow-left"></i> Retour à l'épisode
+      </a>
+    }
+    <div class="header-row">
+      <div>
+        <h1>Demandes d'analyses</h1>
+        @if (episode) {
+          <p class="patient-context">
+            <span>Épisode #{{ episode.id }}</span>
+            @if (patient) {
+              <span>{{ patient.lastName }}, {{ patient.firstName }}</span>
+              <span>DI {{ patient.di }}</span>
+              <span>DMI {{ patient.dmi }}</span>
+            }
+          </p>
+        }
+      </div>
+      @if (canCreate) {
+        <button class="btn btn-primary" (click)="createAnalysis()">
+          <i class="bi bi-plus-lg"></i> Nouvelle demande d'analyse
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <label>
+      Filtrer par statut
+      <select [value]="statusFilter" (change)="onStatusChange($any($event.target).value)">
+        <option value="">Tous</option>
+        <option value="CREATED">Créée</option>
+        <option value="IN_PROGRESS">En cours</option>
+        <option value="COMPLETED">Terminée</option>
+      </select>
+    </label>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des demandes d'analyses...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <button class="btn btn-sm btn-retry" (click)="loadAnalyses()">Réessayer</button>
+    </div>
+  }
+
+  @if (!loading && !error && analyses.length === 0) {
+    <div class="state-message empty">
+      <i class="bi bi-clipboard2-pulse"></i>
+      <p>Aucune demande d'analyse pour cet épisode pour le moment.</p>
+      @if (canCreate) {
+        <button class="btn btn-primary btn-sm" (click)="createAnalysis()">
+          <i class="bi bi-plus-lg"></i> Créer la première
+        </button>
+      }
+    </div>
+  }
+
+  @if (!loading && !error && analyses.length > 0) {
+    <div class="analysis-grid">
+      @for (a of analyses; track a.id) {
+        <article class="analysis-card" (click)="view(a)">
+          <div class="topline">
+            <span class="type-badge" [class.stone]="a.type === 'STONE'">
+              <i class="bi" [class.bi-droplet]="a.type === 'METABOLIC'" [class.bi-gem]="a.type === 'STONE'"></i>
+              {{ typeLabel(a.type) }}
+            </span>
+            <span class="status-badge" [ngClass]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+          </div>
+          <h2>Analyse #{{ a.id }}</h2>
+          <div class="meta">
+            <span><i class="bi bi-person"></i> {{ a.createdBy }}</span>
+            <span><i class="bi bi-clock"></i> {{ a.createdAt | date:'medium' }}</span>
+            @if (a.completedAt) {
+              <span><i class="bi bi-check2-circle"></i> Terminée le {{ a.completedAt | date:'medium' }}</span>
+            }
+          </div>
+          <button class="btn btn-secondary" (click)="view(a); $event.stopPropagation()">
+            <i class="bi bi-eye"></i> Ouvrir
+          </button>
+        </article>
+      }
+    </div>
+  }
+</div>

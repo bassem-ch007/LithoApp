@@ -9,6 +9,7 @@ import com.lithoapp.analysis.entity.StoneResult;
 import com.lithoapp.analysis.exception.AnalysisNotFoundException;
 import com.lithoapp.analysis.exception.InvalidAnalysisTypeOperationException;
 import com.lithoapp.analysis.mapper.StoneResultMapper;
+import com.lithoapp.analysis.notification.NotificationPublisher;
 import com.lithoapp.analysis.repository.StoneResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class StoneService {
     private final StoneResultRepository stoneResultRepository;
     private final AuditService auditService;
     private final StoneResultMapper stoneResultMapper;
+    private final NotificationPublisher notificationPublisher;
 
     // ── Update ────────────────────────────────────────────────────────────
 
@@ -82,6 +84,8 @@ public class StoneService {
 
         // ── Auto-transition CREATED → IN_PROGRESS ─────────────────────────
         requestService.transitionToInProgressIfNeeded(request, actor);
+
+        notificationPublisher.analysisResultAdded(request, actor, "résultat lithiase mis à jour");
 
         return stoneResultMapper.toDto(stone);
     }

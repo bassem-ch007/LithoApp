@@ -1,0 +1,87 @@
+<div class="drainage-monitoring-page">
+  <div class="page-header">
+    <h1>Suivi du drainage / Sonde JJ</h1>
+    <p class="subtitle">Suivre les dispositifs actifs et en retard pour l'ensemble de vos patients.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card overdue">
+      <span class="kpi-label">En retard</span>
+      <span class="kpi-value">{{ overdueCount }}</span>
+    </div>
+    <div class="kpi-card active">
+      <span class="kpi-label">Actifs</span>
+      <span class="kpi-value">{{ activeCount }}</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" [class.selected]="tab === 'OVERDUE'" (click)="setTab('OVERDUE')">
+      <i class="bi bi-exclamation-triangle"></i> En retard
+    </button>
+    <button class="tab" [class.selected]="tab === 'ACTIVE'" (click)="setTab('ACTIVE')">
+      <i class="bi bi-droplet"></i> Actifs
+    </button>
+    <button class="tab" [class.selected]="tab === 'REMOVED'" (click)="setTab('REMOVED')">
+      <i class="bi bi-check2-circle"></i> Retirés
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="state-message loading">
+      <i class="bi bi-arrow-repeat spin"></i> Chargement des drainages...
+    </div>
+  }
+
+  @if (error && !loading) {
+    <div class="state-message error">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+      <button class="btn btn-sm btn-secondary" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (!loading && !error && drainages.length === 0) {
+    <div class="state-message empty">
+      <i class="bi bi-droplet-half"></i>
+      <p>Aucun drainage ne correspond à ce filtre.</p>
+    </div>
+  }
+
+  @if (!loading && !error && drainages.length > 0) {
+    <ul class="drainage-list">
+      @for (d of drainages; track d.id) {
+        <li (click)="open(d)">
+          <div class="left">
+            <div class="row1">
+              <span class="type-badge">{{ typeLabels[d.drainageType] }}</span>
+              <span class="side-badge">{{ sideLabels[d.side] }}</span>
+              <span class="status-badge" [ngClass]="statusClass(d)">{{ statusLabel(d) }}</span>
+            </div>
+            <div class="row2">
+              <span><i class="bi bi-folder2-open"></i> Épisode #{{ d.episodeId }}</span>
+              <span><i class="bi bi-person"></i> Patient #{{ d.patientId }}</span>
+              <span><i class="bi bi-calendar-event"></i> Posé le {{ d.placedAt }}</span>
+              @if (d.plannedRemovalDate) {
+                <span><i class="bi bi-calendar-check"></i> Prévu le {{ d.plannedRemovalDate }}
+                  @if (d.status === 'ACTIVE' && daysUntil(d.plannedRemovalDate) !== null) {
+                    @if ((daysUntil(d.plannedRemovalDate) ?? 0) < 0) {
+                      <strong class="overdue-text">({{ -(daysUntil(d.plannedRemovalDate) ?? 0) }} j de retard)</strong>
+                    } @else if ((daysUntil(d.plannedRemovalDate) ?? 0) <= 7) {
+                      <strong class="due-soon-text">(dans {{ daysUntil(d.plannedRemovalDate) }} j)</strong>
+                    }
+                  }
+                </span>
+              }
+              @if (d.removedAt) {
+                <span><i class="bi bi-check2-circle"></i> Retiré le {{ d.removedAt }}</span>
+              }
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" (click)="open(d); $event.stopPropagation()">
+            <i class="bi bi-arrow-right"></i> Ouvrir
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

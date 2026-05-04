@@ -1,0 +1,13 @@
+package com.lithoapp.notification.enums;
+
+public enum NotificationType {
+    ANALYSIS_CREATED,
+    ANALYSIS_STARTED,
+    ANALYSIS_RESULT_ADDED,
+    ANALYSIS_COMPLETED,
+    DRAINAGE_CREATED,
+    DRAINAGE_REMOVAL_SOON,
+    DRAINAGE_OVERDUE,
+    DRAINAGE_REMOVED,
+    SYSTEM
+}

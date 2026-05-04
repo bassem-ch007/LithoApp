@@ -12,6 +12,7 @@ import com.lithoapp.analysis.exception.AnalysisNotFoundException;
 import com.lithoapp.analysis.exception.InvalidAnalysisTypeOperationException;
 import com.lithoapp.analysis.exception.StorageException;
 import com.lithoapp.analysis.mapper.MetabolicMapper;
+import com.lithoapp.analysis.notification.NotificationPublisher;
 import com.lithoapp.analysis.port.FileStoragePort;
 import com.lithoapp.analysis.repository.MetabolicResultRepository;
 import com.lithoapp.analysis.repository.PdfDocumentRepository;
@@ -38,6 +39,7 @@ public class MetabolicService {
     private final AuditService auditService;
     private final MetabolicMapper metabolicMapper;
     private final PdfUploadValidator pdfUploadValidator;
+    private final NotificationPublisher notificationPublisher;
 
     // ── Upload (versioned) ────────────────────────────────────────────────
 
@@ -135,6 +137,9 @@ public class MetabolicService {
 
         // ── Auto-transition CREATED → IN_PROGRESS ─────────────────────────
         requestService.transitionToInProgressIfNeeded(request, biologistId);
+
+        notificationPublisher.analysisResultAdded(
+                request, biologistId, "PDF " + documentType.name() + " v" + nextVersion);
 
         return metabolicMapper.toDto(doc);
     }

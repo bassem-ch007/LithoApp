@@ -12,11 +12,11 @@ const getDashboardRedirectUrl = (): UrlTree => {
   }
 
   if (role === 'UROLOGUE') {
-    return router.parseUrl('/urologist/dashboard');
+    return router.parseUrl('/patients');
   }
 
   if (role === 'BIOLOGIST') {
-    return router.parseUrl('/biologist/dashboard');
+    return router.parseUrl('/analysis-search');
   }
 
   return router.parseUrl('/pending-approval');

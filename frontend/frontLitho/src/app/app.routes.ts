@@ -27,17 +27,13 @@ export const routes: Routes = [
       },
       {
         path: 'urologist/dashboard',
-        canActivate: [roleGuard],
-        data: { roles: ['UROLOGUE'] },
-        loadComponent: () =>
-          import('../features/urologist-dashboard/urologist-dashboard.component').then(m => m.UrologistDashboardComponent)
+        redirectTo: 'patients',
+        pathMatch: 'full'
       },
       {
         path: 'biologist/dashboard',
-        canActivate: [roleGuard],
-        data: { roles: ['BIOLOGIST'] },
-        loadComponent: () =>
-          import('../features/biologist-dashboard/biologist-dashboard.component').then(m => m.BiologistDashboardComponent)
+        redirectTo: 'analysis-search',
+        pathMatch: 'full'
       },
       {
         path: 'admin/dashboard',
@@ -113,39 +109,86 @@ export const routes: Routes = [
           import('../features/episodes/episodes.component').then(m => m.EpisodesComponent)
       },
       {
-        path: 'analyses',
+        path: 'episodes/:episodeId/analyses',
         canActivate: [roleGuard],
-        data: { roles: ['UROLOGUE', 'BIOLOGIST'] },
+        data: { roles: ['UROLOGUE'] },
         loadComponent: () =>
-          import('../features/analyses/analyses.component').then(m => m.AnalysesComponent)
+          import('../features/analyses/pages/analysis-list/analysis-list.component').then(m => m.AnalysisListComponent)
+      },
+      {
+        path: 'episodes/:episodeId/analyses/new',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/analyses/pages/analysis-create/analysis-create.component').then(m => m.AnalysisCreateComponent)
+      },
+      {
+        path: 'analysis-requests/:id',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE', 'BIOLOGIST', 'ADMIN'] },
+        loadComponent: () =>
+          import('../features/analyses/pages/analysis-details/analysis-details.component').then(m => m.AnalysisDetailsComponent)
       },
       {
         path: 'analysis-requests',
         canActivate: [roleGuard],
-        data: { roles: ['UROLOGUE', 'BIOLOGIST'] },
-        loadComponent: () =>
-          import('../features/analyses/analyses.component').then(m => m.AnalysesComponent)
+        data: { roles: ['UROLOGUE'] },
+        redirectTo: 'patients',
+        pathMatch: 'full'
       },
       {
         path: 'analysis-search',
         canActivate: [roleGuard],
         data: { roles: ['BIOLOGIST'] },
         loadComponent: () =>
-          import('../features/analyses/analyses.component').then(m => m.AnalysesComponent)
+          import('../features/analyses/pages/analysis-search/analysis-search.component').then(m => m.AnalysisSearchComponent)
       },
       {
         path: 'analysis-results',
-        canActivate: [roleGuard],
-        data: { roles: ['BIOLOGIST'] },
-        loadComponent: () =>
-          import('../features/analyses/analyses.component').then(m => m.AnalysesComponent)
+        redirectTo: 'analysis-search',
+        pathMatch: 'full'
       },
       {
         path: 'drainage',
         canActivate: [roleGuard],
         data: { roles: ['UROLOGUE'] },
         loadComponent: () =>
-          import('../features/drainage/drainage.component').then(m => m.DrainageComponent)
+          import('../features/drainage/pages/drainage-monitoring/drainage-monitoring.component').then(m => m.DrainageMonitoringComponent)
+      },
+      {
+        path: 'episodes/:episodeId/drainages',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/drainage/pages/drainage-list/drainage-list.component').then(m => m.DrainageListComponent)
+      },
+      {
+        path: 'episodes/:episodeId/drainages/new',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/drainage/pages/drainage-create/drainage-create.component').then(m => m.DrainageCreateComponent)
+      },
+      {
+        path: 'patients/:patientId/drainages',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE'] },
+        loadComponent: () =>
+          import('../features/drainage/pages/drainage-list/drainage-list.component').then(m => m.DrainageListComponent)
+      },
+      {
+        path: 'drainages/:id',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE', 'ADMIN'] },
+        loadComponent: () =>
+          import('../features/drainage/pages/drainage-details/drainage-details.component').then(m => m.DrainageDetailsComponent)
+      },
+      {
+        path: 'notifications',
+        canActivate: [roleGuard],
+        data: { roles: ['UROLOGUE', 'BIOLOGIST', 'ADMIN'] },
+        loadComponent: () =>
+          import('../features/notifications/notifications.component').then(m => m.NotificationsComponent)
       },
       {
         path: 'access-denied',

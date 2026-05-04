@@ -40,11 +40,11 @@ export class PatientDetailsComponent implements OnInit {
       },
       error: (err) => {
         if (err.status === 404) {
-          this.error = 'Patient not found.';
+          this.error = 'Patient introuvable.';
         } else if (err.status === 403) {
-          this.error = 'You do not have permission to view this patient.';
+          this.error = "Vous n'avez pas l'autorisation de consulter ce patient.";
         } else {
-          this.error = 'Failed to load patient details.';
+          this.error = 'Échec du chargement des détails du patient.';
         }
         this.loading = false;
       }
@@ -69,19 +69,31 @@ export class PatientDetailsComponent implements OnInit {
     }
   }
 
+  viewDrainages(): void {
+    if (this.patient) {
+      this.router.navigate(['/patients', this.patient.id, 'drainages']);
+    }
+  }
+
+  goToAnalysesViaEpisodes(): void {
+    if (this.patient) {
+      this.router.navigate(['/patients', this.patient.id, 'episodes']);
+    }
+  }
+
   formatGender(gender: string): string {
-    return gender === 'MALE' ? 'Male' : 'Female';
+    return gender === 'MALE' ? 'Homme' : 'Femme';
   }
 
   formatBoolean(val: boolean | null): string {
-    if (val === null || val === undefined) return '—';
-    return val ? 'Yes' : 'No';
+    if (val === null || val === undefined) return '-';
+    return val ? 'Oui' : 'Non';
   }
 
-  showComingSoon(): void {
-    this.comingSoonMessage = 'This feature is coming soon.';
-    setTimeout(() => this.comingSoonMessage = null, 2500);
+  formatKidneyType(value: string | null | undefined): string {
+    if (!value) return '-';
+    if (value === 'ANATOMICAL') return 'Anatomique';
+    if (value === 'FUNCTIONAL') return 'Fonctionnel';
+    return value;
   }
-
-  comingSoonMessage: string | null = null;
 }

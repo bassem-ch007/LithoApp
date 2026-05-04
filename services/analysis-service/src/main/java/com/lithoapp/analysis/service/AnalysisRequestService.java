@@ -16,6 +16,7 @@ import com.lithoapp.analysis.mapper.StoneResultMapper;
 import com.lithoapp.analysis.repository.*;
 import com.lithoapp.analysis.client.PatientServiceClient;
 import com.lithoapp.analysis.dto.client.PatientResponse;
+import com.lithoapp.analysis.notification.NotificationPublisher;
 import com.lithoapp.analysis.service.validation.EpisodeValidationService;
 import com.lithoapp.analysis.service.validation.PatientValidationService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class AnalysisRequestService {
     private final PatientValidationService patientValidationService;
     private final EpisodeValidationService episodeValidationService;
     private final PatientServiceClient patientServiceClient;
+    private final NotificationPublisher notificationPublisher;
 
     // ── Create ────────────────────────────────────────────────────────────
 
@@ -83,6 +85,8 @@ public class AnalysisRequestService {
         log.info("Created {} analysis request id={} for episode={} patient={} by={}",
                 request.getType(), request.getId(),
                 request.getEpisodeId(), request.getPatientId(), actor);
+
+        notificationPublisher.analysisCreated(request, actor);
 
         return buildDetailDto(request);
     }
@@ -217,6 +221,7 @@ public class AnalysisRequestService {
                 AuditActionType.REQUEST_COMPLETED, null, null, actor);
 
         log.info("Completed analysis request id={} by {}", id, actor);
+        notificationPublisher.analysisCompleted(request, actor);
         return buildDetailDto(request);
     }
 
@@ -281,6 +286,7 @@ public class AnalysisRequestService {
             auditService.record(request.getId(), actorId,
                     AuditActionType.STATUS_CHANGED, "status",
                     previous.name(), AnalysisStatus.IN_PROGRESS.name());
+            notificationPublisher.analysisStarted(request, actorId);
         }
     }
 

@@ -1,0 +1,172 @@
+.analysis-create-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.25rem;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+
+    &:hover { color: #3b82f6; }
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.35rem;
+  }
+}
+
+.patient-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0;
+
+  span {
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 0.12rem 0.4rem;
+  }
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  &.alert-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+}
+
+.state-message {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+
+  i { font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #3b82f6; }
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.form-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.form-section h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 1rem;
+  background: #fafbfd;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+
+  i {
+    font-size: 1.4rem;
+    color: #6366f1;
+  }
+
+  .type-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .type-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  &:hover {
+    border-color: #c7d2fe;
+  }
+
+  &.selected {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+  &:hover:not(:disabled) { background: #2563eb; }
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+  &:hover { background: #e2e8f0; }
+}
+
+@media (max-width: 720px) {
+  .type-grid { grid-template-columns: 1fr; }
+}

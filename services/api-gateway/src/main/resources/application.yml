@@ -40,6 +40,11 @@ spring:
               predicates:
                 - Path=/api/drainages/**
 
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URI:http://notification-service:8087}
+              predicates:
+                - Path=/notifications/**
+
 management:
   endpoints:
     web:
