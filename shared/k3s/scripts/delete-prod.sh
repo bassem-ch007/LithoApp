@@ -22,11 +22,11 @@ case "$answer" in
 esac
 
 kubectl -n "$NAMESPACE" delete deployment \
-  postgres minio keycloak patient-service episode-service analysis-service drainage-service api-gateway frontend cloudflared \
+  postgres minio keycloak patient-service episode-service analysis-service drainage-service notification-service api-gateway frontend cloudflared \
   --ignore-not-found
 
 kubectl -n "$NAMESPACE" delete service \
-  postgres minio keycloak patient-service episode-service analysis-service drainage-service api-gateway frontend \
+  postgres minio keycloak patient-service episode-service analysis-service drainage-service notification-service api-gateway frontend \
   --ignore-not-found
 
 kubectl -n "$NAMESPACE" delete job minio-create-analysis-bucket --ignore-not-found

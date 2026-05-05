@@ -21,6 +21,8 @@ resources:
   - analysis-service/deployment.yaml
   - drainage-service/service.yaml
   - drainage-service/deployment.yaml
+  - notification-service/service.yaml
+  - notification-service/deployment.yaml
   - api-gateway/service.yaml
   - api-gateway/deployment.yaml
   - frontend/service.yaml

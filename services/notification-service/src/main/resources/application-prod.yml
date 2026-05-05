@@ -1,7 +1,11 @@
 server:
-  port: 8084
+  port: 8087
 
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
   security:
     oauth2:
       resourceserver:
@@ -10,7 +14,7 @@ spring:
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/drainage_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notification-db:5432/notification_db}
     username: ${POSTGRES_USER:${SPRING_DATASOURCE_USERNAME}}
     password: ${POSTGRES_PASSWORD:${SPRING_DATASOURCE_PASSWORD}}
     driver-class-name: org.postgresql.Driver
@@ -19,32 +23,28 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
 
-drainage:
-  reminder:
-    days-before: ${DRAINAGE_REMINDER_DAYS_BEFORE:3}
-
-patient-service:
-  base-url: ${PATIENT_SERVICE_BASE_URL:http://patient-service:8086}
-episode-service:
-  base-url: ${EPISODE_SERVICE_BASE_URL:http://episode-service:8085}
-notification-service:
-  base-url: ${NOTIFICATION_SERVICE_BASE_URL:http://notification-service:8087}
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+    topics:
+      events: ${NOTIFICATION_KAFKA_TOPIC:lithoapp.notifications}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
   endpoint:
     health:
       show-details: never
 
 logging:
   level:
-    com.lithoapp.drainage: INFO
+    com.lithoapp.notification: INFO
     org.hibernate.SQL: WARN

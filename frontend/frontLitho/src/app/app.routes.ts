@@ -131,6 +131,7 @@ export const routes: Routes = [
       },
       {
         path: 'analysis-requests',
+        data: { roles: ['UROLOGUE'] },
         redirectTo: 'patients',
         pathMatch: 'full'
       },

@@ -55,5 +55,6 @@ data:
     create_database "$EPISODE_DB_NAME" "$POSTGRES_USER"
     create_database "$ANALYSIS_DB_NAME" "$POSTGRES_USER"
     create_database "$DRAINAGE_DB_NAME" "$POSTGRES_USER"
+    create_database "$NOTIFICATION_DB_NAME" "$POSTGRES_USER"
     create_database "$KEYCLOAK_DB_NAME" "$KC_DB_USERNAME"
 

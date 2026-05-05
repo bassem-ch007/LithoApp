@@ -32,6 +32,7 @@ Internal-only services:
 - `episode-service:8085`
 - `analysis-service:8082`
 - `drainage-service:8084`
+- `notification-service:8087`
 - `postgres:5432`
 - `minio:9000`
 
@@ -59,6 +60,7 @@ Create `lithoapp-secrets` with these exact keys:
 - `EPISODE_DB_NAME=episode_db`
 - `ANALYSIS_DB_NAME=bilan_db`
 - `DRAINAGE_DB_NAME=drainage_db`
+- `NOTIFICATION_DB_NAME=notification_db`
 - `KEYCLOAK_DB_NAME=keycloak_db`
 - `KEYCLOAK_ADMIN`
 - `KEYCLOAK_ADMIN_PASSWORD`
@@ -79,7 +81,7 @@ kubectl apply -f /tmp/lithoapp-secrets.yaml
 shred -u /tmp/lithoapp-secrets.yaml
 ```
 
-The PostgreSQL init script creates `patient_db`, `episode_db`, `bilan_db`, `drainage_db`, and `keycloak_db`.
+The PostgreSQL init script creates `patient_db`, `episode_db`, `bilan_db`, `drainage_db`, `notification_db`, and `keycloak_db`.
 
 ### 2. Keycloak realm secret
 
@@ -152,6 +154,7 @@ kustomize edit set image docker.io/bassem00/lithoapp-patient-service=docker.io/b
 kustomize edit set image docker.io/bassem00/lithoapp-episode-service=docker.io/bassem00/lithoapp-episode-service:<git-sha>
 kustomize edit set image docker.io/bassem00/lithoapp-analysis-service=docker.io/bassem00/lithoapp-analysis-service:<git-sha>
 kustomize edit set image docker.io/bassem00/lithoapp-drainage-service=docker.io/bassem00/lithoapp-drainage-service:<git-sha>
+kustomize edit set image docker.io/bassem00/lithoapp-notification-service=docker.io/bassem00/lithoapp-notification-service:<git-sha>
 kustomize edit set image docker.io/bassem00/lithoapp-api-gateway=docker.io/bassem00/lithoapp-api-gateway:<git-sha>
 kustomize edit set image docker.io/bassem00/lithoapp-frontend=docker.io/bassem00/lithoapp-frontend:<git-sha>
 cd -
@@ -301,7 +304,7 @@ Then update `shared/k3s/overlays/prod/kustomization.yaml` to a pushed DockerHub 
 
 ## Notes
 
-- No `notification-service` exists in this repo at the time these manifests were created.
+- `notification-service` is included in the base manifests and the prod overlay. It uses the `notification_db` Postgres database, exposes `/notifications/**` through the API Gateway, and receives Feign calls from `analysis-service` and `drainage-service` over `http://notification-service:8087`.
 - The production realm template omits the existing Google identity provider because the current exported realm contains real OAuth credentials. Configure Google in Keycloak manually or extend the template with secret placeholders.
 - MinIO console is not publicly routed.
 - PostgreSQL, MinIO, and all microservices are ClusterIP-only.
