@@ -39,13 +39,15 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "__FRONTEND_PUBLIC_URL__/*"
+        "https://lithoapp.online/*",
+        "https://www.lithoapp.online/*"
       ],
       "webOrigins": [
-        "__FRONTEND_PUBLIC_URL__"
+        "https://lithoapp.online",
+        "https://www.lithoapp.online"
       ],
-      "rootUrl": "__FRONTEND_PUBLIC_URL__",
-      "baseUrl": "__FRONTEND_PUBLIC_URL__",
+      "rootUrl": "https://lithoapp.online",
+      "baseUrl": "https://lithoapp.online",
       "frontchannelLogout": true,
       "attributes": {
         "pkce.code.challenge.method": "S256",

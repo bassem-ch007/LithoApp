@@ -11,9 +11,10 @@ data:
     ingress:
       - hostname: lithoapp.online
         service: http://frontend:80
+      - hostname: www.lithoapp.online
+        service: http://frontend:80
       - hostname: api.lithoapp.online
         service: http://api-gateway:9090
       - hostname: auth.lithoapp.online
         service: http://keycloak:8080
       - service: http_status:404
-
