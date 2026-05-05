@@ -59,9 +59,11 @@ analysis:
 
 # Inter-service HTTP clients
 patient-service:
-  base-url: http://localhost:8086
+  base-url: ${PATIENT_SERVICE_BASE_URL:http://localhost:8086}
 episode-service:
-  base-url: http://localhost:8085
+  base-url: ${EPISODE_SERVICE_BASE_URL:http://localhost:8085}
+notification-service:
+  base-url: ${NOTIFICATION_SERVICE_BASE_URL:http://localhost:8087}
 
 # SpringDoc / Swagger UI
 springdoc:

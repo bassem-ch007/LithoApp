@@ -12,6 +12,8 @@ images:
     newTag: replace-with-git-sha
   - name: docker.io/bassem00/lithoapp-drainage-service
     newTag: replace-with-git-sha
+  - name: docker.io/bassem00/lithoapp-notification-service
+    newTag: replace-with-git-sha
   - name: docker.io/bassem00/lithoapp-api-gateway
     newTag: replace-with-git-sha
   - name: docker.io/bassem00/lithoapp-frontend

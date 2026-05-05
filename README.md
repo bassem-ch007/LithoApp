@@ -84,16 +84,15 @@ endpoint** with `@PreAuthorize` against Keycloak realm roles
 ### Start everything with Docker Compose
 
 ```bash
-cd shared/docker
-docker compose up -d --build
+docker compose -f shared/docker/dev/docker-compose.yml up -d --build
 ```
 
 First startup takes a few minutes (database init + Keycloak realm import +
 service health checks). Watch progress with:
 
 ```bash
-docker compose ps
-docker compose logs -f api-gateway
+docker compose -f shared/docker/dev/docker-compose.yml ps
+docker compose -f shared/docker/dev/docker-compose.yml logs -f api-gateway
 ```
 
 When `api-gateway` becomes `healthy`, the stack is ready:
@@ -106,8 +105,7 @@ When `api-gateway` becomes `healthy`, the stack is ready:
 ### Resetting state
 
 ```bash
-cd shared/docker
-docker compose down -v          # ⚠ removes all DB volumes too
+docker compose -f shared/docker/dev/docker-compose.yml down -v   # ⚠ removes all DB volumes too
 ```
 
 ### Running a single backend service from your IDE
@@ -117,7 +115,7 @@ already-running Compose stack:
 
 ```bash
 cd services/episode-service
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5435/episode_db \
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5437/episode_db \
 SPRING_DATASOURCE_USERNAME=postgres \
 SPRING_DATASOURCE_PASSWORD=postgres \
 KEYCLOAK_ISSUER_URI=http://localhost:8080/realms/medical-platform \

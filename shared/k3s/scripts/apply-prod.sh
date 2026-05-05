@@ -42,7 +42,7 @@ fi
 
 kubectl apply -k "$OVERLAY"
 
-for deployment in postgres minio keycloak patient-service episode-service analysis-service drainage-service api-gateway frontend cloudflared; do
+for deployment in postgres minio keycloak patient-service episode-service analysis-service drainage-service notification-service api-gateway frontend cloudflared; do
   kubectl -n "$NAMESPACE" rollout status "deployment/${deployment}" --timeout=10m
 done
 
