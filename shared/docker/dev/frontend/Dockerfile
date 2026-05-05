@@ -7,7 +7,7 @@ COPY frontend/frontLitho/package*.json ./
 RUN npm ci
 
 COPY frontend/frontLitho/ ./
-RUN npm run build -- --configuration development
+RUN npx ng build --configuration development
 
 FROM nginx:1.27-alpine
 COPY shared/docker/dev/frontend/nginx.conf /etc/nginx/conf.d/default.conf
