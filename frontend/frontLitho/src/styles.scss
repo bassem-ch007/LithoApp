@@ -4,6 +4,92 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   background: #f5f6fa;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent horizontal page overflow caused by wide tables/cards on mobile */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make all native tables horizontally scrollable when wrapped in .table-responsive */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Long text helpers */
+.text-break-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Page-level helpers used across feature pages */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Responsive form: 2 columns by default, 1 column on small screens */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card grid that stacks on mobile */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Force buttons to wrap nicely on small screens */
+@media (max-width: 480px) {
+  .btn-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-row > .btn,
+  .btn-row > button {
+    width: 100%;
+  }
+}
+
+/* Make any long identifier / email / phone wrap on mobile */
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

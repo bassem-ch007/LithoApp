@@ -22,6 +22,8 @@
 
   .header-row {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     justify-content: space-between;
     align-items: center;
   }
@@ -158,8 +160,24 @@
 
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-item.span-2 {
+    grid-column: auto;
+  }
 }
 
 .detail-item {
@@ -270,8 +288,14 @@
 
 .workflow-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .workflow-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .workflow-btn {
@@ -324,4 +348,26 @@
   color: #94a3b8;
   margin-top: 1rem;
   padding: 0.5rem;
+}
+
+.detail-item .value {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 600px) {
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .detail-card {
+    padding: 1rem;
+  }
+
+  .toast-message {
+    right: 12px;
+    left: 12px;
+    top: 70px;
+    justify-content: center;
+  }
 }
