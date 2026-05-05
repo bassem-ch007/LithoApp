@@ -1,5 +1,6 @@
 .pending-approval {
   max-width: 720px;
+  width: 100%;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -8,6 +9,7 @@
   h1 {
     margin: 0 0 0.75rem;
     color: #111827;
+    font-size: clamp(1.4rem, 2.5vw, 1.875rem);
   }
 
   p {
@@ -40,5 +42,15 @@
 
   .secondary {
     background: #64748b;
+  }
+}
+
+@media (max-width: 480px) {
+  .pending-approval {
+    padding: 1.1rem;
+  }
+
+  .actions button {
+    flex: 1 1 100%;
   }
 }

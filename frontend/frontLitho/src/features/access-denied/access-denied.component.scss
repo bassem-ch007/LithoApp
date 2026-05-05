@@ -1,5 +1,6 @@
 .access-denied {
   max-width: 640px;
+  width: 100%;
   background: #ffffff;
   border: 1px solid #fecaca;
   border-radius: 8px;
@@ -8,10 +9,18 @@
   h1 {
     margin: 0 0 0.5rem;
     color: #991b1b;
+    font-size: clamp(1.4rem, 2.5vw, 1.875rem);
   }
 
   p {
     margin: 0;
     color: #4b5563;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 480px) {
+  .access-denied {
+    padding: 1.1rem;
   }
 }

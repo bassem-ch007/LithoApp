@@ -184,8 +184,19 @@
 
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.detail-item .value {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 960px) {
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .detail-item {
@@ -251,6 +262,14 @@
 
   .page-header .header-row {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
+
+  .header-actions {
+    .btn { flex: 1 1 auto; justify-content: center; }
+  }
+
+  .page-header h1 { font-size: 1.25rem; }
+
+  .detail-card { padding: 1rem; }
 }

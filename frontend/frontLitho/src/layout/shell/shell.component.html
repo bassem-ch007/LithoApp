@@ -1,8 +1,14 @@
-<div class="layout">
+<div class="layout" [class.sidebar-open]="sidebarOpen">
+  <!-- BACKDROP (mobile) -->
+  <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
       <h2>LithoApp</h2>
+      <button type="button" class="close-btn d-lg-none" aria-label="Fermer le menu" (click)="closeSidebar()">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
 
     <nav class="nav">
@@ -40,12 +46,19 @@
   <div class="main">
     <!-- TOPBAR -->
     <header class="topbar">
+      <button type="button" class="menu-btn d-lg-none" aria-label="Ouvrir le menu" (click)="toggleSidebar()">
+        <i class="bi bi-list"></i>
+      </button>
+
       <div class="user-info">
         <strong>{{ authService.getFullName() || authService.getUsername() }}</strong>
         <span>{{ authService.getEmail() }}</span>
       </div>
 
-      <button class="logout-btn" (click)="logout()">Déconnexion</button>
+      <button class="logout-btn" (click)="logout()">
+        <i class="bi bi-box-arrow-right d-sm-none"></i>
+        <span class="d-none d-sm-inline">Déconnexion</span>
+      </button>
     </header>
 
     <!-- PAGE CONTENT -->

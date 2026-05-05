@@ -125,6 +125,7 @@
 
   li {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
@@ -172,3 +173,15 @@
 
 .overdue-text { color: #b91c1c; margin-left: 0.25rem; }
 .due-soon-text { color: #b45309; margin-left: 0.25rem; }
+
+@media (max-width: 600px) {
+  .page-header h1 { font-size: 1.25rem; }
+  .kpi-card .kpi-value { font-size: 1.5rem; }
+
+  .drainage-list li {
+    flex-direction: column;
+    align-items: stretch;
+
+    .btn { align-self: flex-end; }
+  }
+}
