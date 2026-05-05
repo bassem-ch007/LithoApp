@@ -94,14 +94,83 @@ jobs:
           kubectl get ns "${K3S_NAMESPACE}"
           kubectl -n "${K3S_NAMESPACE}" get deployment "${{ steps.image.outputs.deployment }}"
 
-      - name: Update deployment image
+      - name: Apply latest deployment manifest and image
         shell: bash
         run: |
           set -euo pipefail
 
-          kubectl -n "${K3S_NAMESPACE}" set image \
-            deployment/${{ steps.image.outputs.deployment }} \
-            ${{ steps.image.outputs.container }}=${{ steps.image.outputs.image }}
+          DEPLOYMENT="${{ inputs.deployment }}"
+          IMAGE_TAG="${{ inputs.image_tag }}"
+
+          case "$DEPLOYMENT" in
+            frontend)
+              kubectl apply -f shared/k3s/base/frontend/deployment.yaml
+              kubectl apply -f shared/k3s/base/frontend/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/frontend \
+                frontend=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-frontend:${IMAGE_TAG}
+              ;;
+
+            api-gateway)
+              kubectl apply -f shared/k3s/base/api-gateway/deployment.yaml
+              kubectl apply -f shared/k3s/base/api-gateway/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/api-gateway \
+                api-gateway=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-api-gateway:${IMAGE_TAG}
+              ;;
+
+            patient-service)
+              kubectl apply -f shared/k3s/base/patient-service/deployment.yaml
+              kubectl apply -f shared/k3s/base/patient-service/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/patient-service \
+                patient-service=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-patient-service:${IMAGE_TAG}
+              ;;
+
+            episode-service)
+              kubectl apply -f shared/k3s/base/episode-service/deployment.yaml
+              kubectl apply -f shared/k3s/base/episode-service/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/episode-service \
+                episode-service=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-episode-service:${IMAGE_TAG}
+              ;;
+
+            analysis-service)
+              kubectl apply -f shared/k3s/base/analysis-service/deployment.yaml
+              kubectl apply -f shared/k3s/base/analysis-service/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/analysis-service \
+                analysis-service=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-analysis-service:${IMAGE_TAG}
+              ;;
+
+            drainage-service)
+              kubectl apply -f shared/k3s/base/drainage-service/deployment.yaml
+              kubectl apply -f shared/k3s/base/drainage-service/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/drainage-service \
+                drainage-service=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-drainage-service:${IMAGE_TAG}
+              ;;
+
+            notification-service)
+              kubectl apply -f shared/k3s/base/notification-service/deployment.yaml
+              kubectl apply -f shared/k3s/base/notification-service/service.yaml
+
+              kubectl -n "${K3S_NAMESPACE}" set image \
+                deployment/notification-service \
+                notification-service=docker.io/${DOCKERHUB_NAMESPACE}/lithoapp-notification-service:${IMAGE_TAG}
+              ;;
+
+            *)
+              echo "Unknown deployment: $DEPLOYMENT"
+              exit 1
+              ;;
+          esac
 
       - name: Wait for rollout
         shell: bash
