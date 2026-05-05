@@ -8,7 +8,9 @@ data:
   JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
 
   FRONTEND_PUBLIC_URL: "https://lithoapp.online"
+  FRONTEND_WWW_PUBLIC_URL: "https://www.lithoapp.online"
   FRONTEND_ALLOWED_ORIGIN: "https://lithoapp.online"
+  FRONTEND_ALLOWED_ORIGINS: "https://lithoapp.online,https://www.lithoapp.online"
   API_PUBLIC_URL: "https://api.lithoapp.online"
 
   PATIENT_SERVICE_BASE_URL: "http://patient-service:8086"

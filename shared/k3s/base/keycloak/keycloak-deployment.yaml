@@ -63,7 +63,9 @@ spec:
             - name: KC_HOSTNAME
               value: "auth.lithoapp.online"
             - name: KC_HOSTNAME_STRICT
-              value: "false"
+              value: "true"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "true"
             - name: KC_PROXY_HEADERS
               value: xforwarded
           readinessProbe:

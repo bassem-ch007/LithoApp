@@ -30,7 +30,7 @@ spec:
                 name: lithoapp-common-config
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 10
@@ -38,7 +38,7 @@ spec:
             failureThreshold: 12
           livenessProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: http
             initialDelaySeconds: 120
             periodSeconds: 20
