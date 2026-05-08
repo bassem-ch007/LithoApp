@@ -10,7 +10,7 @@ COPY frontend/frontLitho/ ./
 RUN npm run build -- --configuration production
 
 FROM nginx:1.27-alpine
-COPY shared/docker/prod/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY shared/docker/prod/frontend/nginx-cash.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/frontend/frontLitho/dist/front-litho/browser /usr/share/nginx/html
 
 EXPOSE 80
