@@ -1,0 +1,190 @@
+name: Build selected LithoApp image
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_service:
+        description: "Service image(s) to build and push"
+        required: true
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - all
+          - patient-service
+          - episode-service
+          - analysis-service
+          - drainage-service
+          - notification-service
+          - api-gateway
+          - frontend
+
+concurrency:
+  group: lithoapp-build-${{ github.event.inputs.target_service }}
+  cancel-in-progress: false
+
+env:
+  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build and push selected image(s)
+    runs-on: self-hosted
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Validate runner tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version
+          jq --version
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Detect selected services
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET="${{ inputs.target_service }}"
+
+          ALL_SERVICES=(
+            "patient-service"
+            "episode-service"
+            "analysis-service"
+            "drainage-service"
+            "notification-service"
+            "api-gateway"
+            "frontend"
+          )
+
+          declare -A SERVICE_PATHS
+          SERVICE_PATHS["patient-service"]="services/patient-service shared/docker/prod/patient-service"
+          SERVICE_PATHS["episode-service"]="services/episode-service shared/docker/prod/episode-service"
+          SERVICE_PATHS["analysis-service"]="services/analysis-service shared/docker/prod/analysis-service"
+          SERVICE_PATHS["drainage-service"]="services/drainage-service shared/docker/prod/drainage-service"
+          SERVICE_PATHS["notification-service"]="services/notification-service shared/docker/prod/notification-service"
+          SERVICE_PATHS["api-gateway"]="services/api-gateway shared/docker/prod/api-gateway"
+          SERVICE_PATHS["frontend"]="frontend/frontLitho shared/docker/prod/frontend"
+
+          SELECTED_SERVICES=()
+
+          if [ "$TARGET" = "all" ]; then
+            SELECTED_SERVICES=("${ALL_SERVICES[@]}")
+
+          elif [ "$TARGET" = "auto" ]; then
+            echo "Auto-detecting changed services..."
+
+            CHANGED_FILES="$(git diff --name-only HEAD~1 HEAD || true)"
+            echo "$CHANGED_FILES"
+
+            for service in "${ALL_SERVICES[@]}"; do
+              for path in ${SERVICE_PATHS[$service]}; do
+                if echo "$CHANGED_FILES" | grep -q "^$path/"; then
+                  SELECTED_SERVICES+=("$service")
+                  break
+                fi
+              done
+            done
+
+            if [ "${#SELECTED_SERVICES[@]}" -eq 0 ]; then
+              echo "No service-specific changes detected."
+              echo "Nothing to build."
+            fi
+
+          else
+            SELECTED_SERVICES=("$TARGET")
+          fi
+
+          printf "%s\n" "${SELECTED_SERVICES[@]}" > /tmp/selected-services.txt
+
+          echo "Selected service(s):"
+          cat /tmp/selected-services.txt || true
+
+      - name: Build and push selected image(s)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -s /tmp/selected-services.txt ]; then
+            echo "No services selected. Skipping build."
+            exit 0
+          fi
+
+          declare -A DOCKERFILES
+          DOCKERFILES["patient-service"]="shared/docker/prod/patient-service/Dockerfile"
+          DOCKERFILES["episode-service"]="shared/docker/prod/episode-service/Dockerfile"
+          DOCKERFILES["analysis-service"]="shared/docker/prod/analysis-service/Dockerfile"
+          DOCKERFILES["drainage-service"]="shared/docker/prod/drainage-service/Dockerfile"
+          DOCKERFILES["notification-service"]="shared/docker/prod/notification-service/Dockerfile"
+          DOCKERFILES["api-gateway"]="shared/docker/prod/api-gateway/Dockerfile"
+          DOCKERFILES["frontend"]="shared/docker/prod/frontend/Dockerfile"
+
+          declare -A IMAGES
+          IMAGES["patient-service"]="lithoapp-patient-service"
+          IMAGES["episode-service"]="lithoapp-episode-service"
+          IMAGES["analysis-service"]="lithoapp-analysis-service"
+          IMAGES["drainage-service"]="lithoapp-drainage-service"
+          IMAGES["notification-service"]="lithoapp-notification-service"
+          IMAGES["api-gateway"]="lithoapp-api-gateway"
+          IMAGES["frontend"]="lithoapp-frontend"
+
+          while read -r service; do
+            [ -z "$service" ] && continue
+
+            dockerfile="${DOCKERFILES[$service]}"
+            image="${IMAGES[$service]}"
+
+            if [ ! -f "$dockerfile" ]; then
+              echo "ERROR: missing Dockerfile: $dockerfile" >&2
+              exit 1
+            fi
+
+            FULL_IMAGE="docker.io/${DOCKERHUB_NAMESPACE}/${image}:${IMAGE_TAG}"
+            LATEST_IMAGE="docker.io/${DOCKERHUB_NAMESPACE}/${image}:latest"
+
+            echo "============================================================"
+            echo "Building service: $service"
+            echo "Dockerfile: $dockerfile"
+            echo "Image: $FULL_IMAGE"
+            echo "Latest: $LATEST_IMAGE"
+            echo "============================================================"
+
+            docker buildx build \
+              --file "$dockerfile" \
+              --tag "$FULL_IMAGE" \
+              --tag "$LATEST_IMAGE" \
+              --cache-from "type=gha,scope=${image}" \
+              --cache-to "type=gha,mode=max,scope=${image}" \
+              --push \
+              .
+
+          done < /tmp/selected-services.txt
+
+      - name: Print deployment information
+        shell: bash
+        run: |
+          echo "Build workflow completed."
+          echo ""
+          echo "Image tag pushed:"
+          echo "${IMAGE_TAG}"
+          echo ""
+          echo "Selected services:"
+          cat /tmp/selected-services.txt || true
+          echo ""
+          echo "Use this same IMAGE_TAG in the deploy workflow:"
+          echo "${IMAGE_TAG}"

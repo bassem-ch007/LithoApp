@@ -1,0 +1,188 @@
+name: Deploy one LithoApp image to k3s
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_service:
+        description: "Single service to deploy"
+        required: true
+        default: "frontend"
+        type: choice
+        options:
+          - patient-service
+          - episode-service
+          - analysis-service
+          - drainage-service
+          - notification-service
+          - api-gateway
+          - frontend
+
+      image_tag:
+        description: "Docker image tag to deploy, usually the GitHub SHA from the build workflow"
+        required: true
+        type: string
+
+concurrency:
+  group: lithoapp-deploy-k3s
+  cancel-in-progress: false
+
+env:
+  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
+  K3S_NAMESPACE: lithoapp
+
+jobs:
+  deploy:
+    name: Deploy one image to k3s with rollout
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate runner tools and cluster access
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl version --client=true
+          kubectl get nodes
+
+      - name: Verify Kubernetes secrets are already bootstrapped
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash shared/k3s/scripts/mvp-verify-secrets.sh
+
+      - name: Resolve deployment metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SERVICE="${{ inputs.target_service }}"
+          IMAGE_TAG="${{ inputs.image_tag }}"
+
+          case "$SERVICE" in
+            patient-service)
+              IMAGE_NAME="lithoapp-patient-service"
+              DEPLOYMENT_NAME="patient-service"
+              CONTAINER_NAME="patient-service"
+              ;;
+            episode-service)
+              IMAGE_NAME="lithoapp-episode-service"
+              DEPLOYMENT_NAME="episode-service"
+              CONTAINER_NAME="episode-service"
+              ;;
+            analysis-service)
+              IMAGE_NAME="lithoapp-analysis-service"
+              DEPLOYMENT_NAME="analysis-service"
+              CONTAINER_NAME="analysis-service"
+              ;;
+            drainage-service)
+              IMAGE_NAME="lithoapp-drainage-service"
+              DEPLOYMENT_NAME="drainage-service"
+              CONTAINER_NAME="drainage-service"
+              ;;
+            notification-service)
+              IMAGE_NAME="lithoapp-notification-service"
+              DEPLOYMENT_NAME="notification-service"
+              CONTAINER_NAME="notification-service"
+              ;;
+            api-gateway)
+              IMAGE_NAME="lithoapp-api-gateway"
+              DEPLOYMENT_NAME="api-gateway"
+              CONTAINER_NAME="api-gateway"
+              ;;
+            frontend)
+              IMAGE_NAME="lithoapp-frontend"
+              DEPLOYMENT_NAME="frontend"
+              CONTAINER_NAME="frontend"
+              ;;
+            *)
+              echo "Unknown service: $SERVICE" >&2
+              exit 1
+              ;;
+          esac
+
+          FULL_IMAGE="docker.io/${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+          echo "SERVICE=$SERVICE" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> "$GITHUB_ENV"
+          echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> "$GITHUB_ENV"
+          echo "CONTAINER_NAME=$CONTAINER_NAME" >> "$GITHUB_ENV"
+          echo "FULL_IMAGE=$FULL_IMAGE" >> "$GITHUB_ENV"
+
+          echo "Service: $SERVICE"
+          echo "Deployment: $DEPLOYMENT_NAME"
+          echo "Container: $CONTAINER_NAME"
+          echo "Image: $FULL_IMAGE"
+
+      - name: Show current image before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Current image:"
+          kubectl -n "${K3S_NAMESPACE}" get deployment "${DEPLOYMENT_NAME}" \
+            -o=jsonpath="{.spec.template.spec.containers[?(@.name=='${CONTAINER_NAME}')].image}"
+          echo ""
+
+      - name: Deploy selected image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Deploying:"
+          echo "${FULL_IMAGE}"
+
+          kubectl -n "${K3S_NAMESPACE}" set image \
+            deployment/"${DEPLOYMENT_NAME}" \
+            "${CONTAINER_NAME}=${FULL_IMAGE}"
+
+      - name: Wait for rollout status
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl -n "${K3S_NAMESPACE}" rollout status \
+            deployment/"${DEPLOYMENT_NAME}" \
+            --timeout=300s
+
+      - name: Show final deployment image
+        if: always()
+        shell: bash
+        run: |
+          set +e
+
+          echo "Final image:"
+          kubectl -n "${K3S_NAMESPACE}" get deployment "${DEPLOYMENT_NAME}" \
+            -o=jsonpath="{.spec.template.spec.containers[?(@.name=='${CONTAINER_NAME}')].image}"
+          echo ""
+
+      - name: Show final k3s status
+        if: always()
+        shell: bash
+        run: |
+          bash shared/k3s/scripts/mvp-status.sh || true
+
+      - name: Show failing pod details
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+
+          echo "Rollout failed for deployment: ${DEPLOYMENT_NAME}"
+
+          kubectl -n "${K3S_NAMESPACE}" get pods \
+            -l app="${DEPLOYMENT_NAME}" \
+            -o wide || true
+
+          kubectl -n "${K3S_NAMESPACE}" get pods \
+            -l app="${DEPLOYMENT_NAME}" \
+            --no-headers | awk '$3!="Running" && $3!="Completed" {print $1}' | while read -r pod; do
+              echo "============================================================"
+              echo "POD: $pod"
+              echo "============================================================"
+              kubectl -n "${K3S_NAMESPACE}" describe pod "$pod" || true
+              kubectl -n "${K3S_NAMESPACE}" logs "$pod" --all-containers --tail=200 || true
+            done

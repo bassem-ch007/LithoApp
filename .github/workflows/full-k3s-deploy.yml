@@ -1,4 +1,4 @@
-name: MVP Deploy LithoApp to k3s
+name: full Deploy LithoApp to k3s
 
 on:
   workflow_dispatch:
