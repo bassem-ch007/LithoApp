@@ -1,0 +1,160 @@
+name: frontend pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional image tag. Leave empty to use the current commit SHA."
+        required: false
+        default: ""
+  push:
+    branches:
+      - master
+    paths:
+      - "frontend/frontLitho/**"
+
+concurrency:
+  group: lithoapp-frontend-demo-deploy
+  cancel-in-progress: false
+
+env:
+  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+  K3S_NAMESPACE: ${{ vars.K3S_NAMESPACE || 'lithoapp' }}
+  IMAGE_NAME: lithoapp-frontend
+  DEPLOYMENT_NAME: frontend
+  CONTAINER_NAME: frontend
+
+jobs:
+  build-push-deploy-frontend:
+    name: Build, push, and deploy frontend
+    runs-on: self-hosted
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Choose image tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INPUT_TAG="${{ github.event.inputs.image_tag || '' }}"
+
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$GITHUB_SHA"
+          fi
+
+          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "FULL_IMAGE=docker.io/${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:$TAG" >> "$GITHUB_ENV"
+          echo "LATEST_IMAGE=docker.io/${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:latest" >> "$GITHUB_ENV"
+
+          echo "Selected frontend image tag: $TAG"
+          echo "Full image: docker.io/${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:$TAG"
+
+      - name: Validate required variables
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DOCKERHUB_NAMESPACE:-}" ]; then
+            echo "ERROR: DOCKERHUB_NAMESPACE repository variable is missing." >&2
+            exit 1
+          fi
+
+          if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
+            echo "ERROR: DOCKERHUB_USERNAME repository variable is missing." >&2
+            exit 1
+          fi
+
+          echo "Docker Hub namespace: $DOCKERHUB_NAMESPACE"
+          echo "Docker Hub username: $DOCKERHUB_USERNAME"
+          echo "K3s namespace: $K3S_NAMESPACE"
+
+      - name: Validate runner tools
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker version
+          kubectl version --client=true
+          kubectl get namespace "$K3S_NAMESPACE"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push frontend image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DOCKERFILE="shared/docker/prod/frontend/Dockerfile"
+
+          if [ ! -f "$DOCKERFILE" ]; then
+            echo "ERROR: missing Dockerfile: $DOCKERFILE" >&2
+            exit 1
+          fi
+
+          echo "Building frontend image:"
+          echo "$FULL_IMAGE"
+
+          docker buildx build \
+            --file "$DOCKERFILE" \
+            --tag "$FULL_IMAGE" \
+            --tag "$LATEST_IMAGE" \
+            --cache-from "type=gha,scope=${IMAGE_NAME}" \
+            --cache-to "type=gha,mode=max,scope=${IMAGE_NAME}" \
+            --push \
+            .
+
+      - name: Deploy frontend to k3s
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Deploying image to k3s:"
+          echo "$FULL_IMAGE"
+
+          kubectl -n "$K3S_NAMESPACE" set image \
+            deployment/"$DEPLOYMENT_NAME" \
+            "$CONTAINER_NAME"="$FULL_IMAGE"
+
+          kubectl -n "$K3S_NAMESPACE" rollout status \
+            deployment/"$DEPLOYMENT_NAME" \
+            --timeout=300s
+
+      - name: Verify deployed image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Expected image:"
+          echo "$FULL_IMAGE"
+          echo ""
+
+          echo "Deployment image now configured:"
+          DEPLOYED_IMAGE="$(kubectl -n "$K3S_NAMESPACE" get deployment "$DEPLOYMENT_NAME" \
+            -o=jsonpath="{.spec.template.spec.containers[?(@.name=='$CONTAINER_NAME')].image}")"
+
+          echo "$DEPLOYED_IMAGE"
+          echo ""
+
+          if [ "$DEPLOYED_IMAGE" != "$FULL_IMAGE" ]; then
+            echo "ERROR: deployed image does not match expected image." >&2
+            exit 1
+          fi
+
+          echo "Frontend pods:"
+          kubectl -n "$K3S_NAMESPACE" get pods -l app="$DEPLOYMENT_NAME" -o wide || \
+          kubectl -n "$K3S_NAMESPACE" get pods | grep frontend || true
